@@ -23,7 +23,7 @@ function Login({ setUserId }) {
     const [updatedpassword, setUpdatedPassword] = useState("")
     const [updatedConfirmpassword, setUpdatedConfirmPassword] = useState("")
     const [passwordsMatch, setPasswordsMatch] = useState(true);
-
+    const [loading, setLoading] = useState(false);
 
     const onRegisterClick = () => {
         setRegisterClick(true)
@@ -62,7 +62,7 @@ function Login({ setUserId }) {
             return;
         }
         else {
-
+            setLoading(true);
             axios.post("https://plum-cuboid-crest.glitch.me/registerr", values)
                 .then(res => {
                     console.log(res);
@@ -81,7 +81,7 @@ function Login({ setUserId }) {
                     setEmail("")
                     setmobileNumber("")
                     setAddress("")
-                });
+                }).finally(() => setLoading(false));
         }
 
     }
@@ -104,7 +104,7 @@ function Login({ setUserId }) {
             return;
         }
         else {
-
+            setLoading(true);
             axios.post("https://plum-cuboid-crest.glitch.me/loginn", values)
                 .then(res => {
 
@@ -127,7 +127,7 @@ function Login({ setUserId }) {
                     toast.current.show({ severity: 'error', summary: 'Error', detail: 'Invalid email or password' });
                     setLoginUserName("")
                     setPassword("")
-                });
+                }).finally(() => setLoading(false));
 
         }
 
@@ -164,7 +164,7 @@ function Login({ setUserId }) {
             setPasswordsMatch(false);
             return;
         } else {
-
+            setLoading(true);
             axios.put("https://plum-cuboid-crest.glitch.me/updateUser", values)
                 .then(res => {
                     console.log(res);
@@ -183,7 +183,7 @@ function Login({ setUserId }) {
                     setUpdatedPassword("")
                     setUpdatedConfirmPassword("")
                     setPasswordsMatch(true)
-                });
+                }).finally(() => setLoading(false));
         }
 
         setShowForget(false)
@@ -282,9 +282,18 @@ function Login({ setUserId }) {
 
                             </div>
                             <div className='button-container'>
-                                <button type="submit" className="login-button">
+                                {/* <button type="submit" className="login-button">
                                     Register
-                                </button>
+                                </button> */}
+                                {loading ? (
+                                    <div className="spinner-border text-primary" role="status" style={{ backgroundColor: "blue", color: "white" }}>
+                                        <span className="visually-hidden">Loading...</span>
+                                    </div>
+                                ) : (
+                                    <button type="submit" className="login-button">
+                                        Register
+                                    </button>
+                                )}
                             </div>
                         </form>
                     }
@@ -338,9 +347,18 @@ function Login({ setUserId }) {
                                     </div>
 
                                     <div className='button-container' style={{ marginTop: "20px" }}>
-                                        <button type="submit" className="login-button">
+                                        {/* <button type="submit" className="login-button">
                                             Login
-                                        </button>
+                                        </button> */}
+                                        {loading ? (
+                                            <div className="spinner-border text-primary" role="status" style={{ backgroundColor: "blue", color: "white" }}>
+                                                <span className="visually-hidden">Loading...</span>
+                                            </div>
+                                        ) : (
+                                            <button type="submit" className="login-button">
+                                                Login
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
 
@@ -417,9 +435,19 @@ function Login({ setUserId }) {
                             <button class="btn btn-dark mt-5" onClick={onCancel} style={{ marginLeft: isMobile ? "-100px" : "" }}>
                                 cancel
                             </button>
-                            <button type="submit" className="login-button">
+                            {/* <button type="submit" className="login-button">
                                 Submit
-                            </button>
+                            </button> */}
+
+                            {loading ? (
+                                <div className="spinner-border text-primary" role="status" style={{ backgroundColor: "blue", color: "white" }}>
+                                    <span className="visually-hidden">Loading...</span>
+                                </div>
+                            ) : (
+                                <button type="submit" className="login-button">
+                                    Submit
+                                </button>
+                            )}
                         </div>
 
                     </form>
