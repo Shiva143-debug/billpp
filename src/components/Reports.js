@@ -427,8 +427,15 @@ const Reports = () => {
             <Header />
             <Card className="reports-card">
                 {/* <h2 className="reports-heading">Reports</h2> */}
-
-                <TabMenu model={tabItems} activeIndex={activeTabIndex} onTabChange={handleTabChange} className="tab-container" />
+                
+                <div className="tab-wrapper">
+                    <TabMenu 
+                        model={tabItems} 
+                        activeIndex={activeTabIndex} 
+                        onTabChange={handleTabChange} 
+                        className="tab-container" 
+                    />
+                </div>
 
                 {renderReportContent()}
             </Card>

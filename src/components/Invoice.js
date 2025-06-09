@@ -184,28 +184,27 @@ const Invoice = () => {
 
     const renderAddInvoice = () => {
         return (
-            <div className="d-flex justify-content-between gap-5">
-                <div style={{ width: "50vw" }}>
+            <div className="invoice-form-container">
+                <div className="invoice-form-section">
                     <h2 className="invoice-heading">Add Invoice</h2>
-                    <div className="card px-5 pt-3" >
-
+                    <div className="card invoice-form-card">
                         <form onSubmit={handleSubmit}>
-                            <div className=" d-flex align-items-start gap-3 mb-3">
+                            <div className="form-field">
                                 <label htmlFor="invoice" className="form-label">Invoice Number:</label>
                                 <InputText id="invoice" value={invoice} onChange={(e) => setInvoice(e.target.value)} placeholder="Enter invoice number" className="form-control" />
                             </div>
 
-                            <div className="d-flex align-items-start gap-3 mb-3">
+                            <div className="form-field">
                                 <label htmlFor="company" className="form-label">Company Name:</label>
                                 <InputText id="company" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Enter company name" className="form-control" />
                             </div>
 
-                            <div className="d-flex align-items-start gap-3 mb-3">
+                            <div className="form-field">
                                 <label htmlFor="amount" className="form-label">Amount:</label>
                                 <InputNumber id="amount" value={amount} onValueChange={(e) => setAmount(e.value)} placeholder="Enter amount" mode="currency" currency="INR" locale="en-IN" className="form-control" />
                             </div>
 
-                            <div className="d-flex align-items-start gap-3 mb-3">
+                            <div className="form-field">
                                 <label htmlFor="file" className="form-label">Invoice PDF:</label>
                                 <input id="file" type="file" onChange={handleFileChange} accept=".pdf" className="file-input" />
                             </div>
@@ -221,9 +220,9 @@ const Invoice = () => {
                             </div>
                         </form>
                     </div>
-
                 </div>
-                <div style={{ width: "50vw" }}>
+                
+                <div className="invoice-table-section">
                     <h2 className="invoice-heading">Recent Invoices</h2>
                     <div className="table-container">
                         <DataTable value={invoices} className="invoice-table" paginator rows={4} responsiveLayout="scroll" stripedRows emptyMessage="No invoices found">
@@ -284,7 +283,14 @@ const Invoice = () => {
             <Card className="invoice-card">
                 <h2 className="invoice-heading">Invoice Management</h2>
 
-                <TabMenu model={tabItems} activeIndex={activeTabIndex} onTabChange={handleTabChange} className="tab-container" />
+                <div className="tab-wrapper">
+                    <TabMenu 
+                        model={tabItems} 
+                        activeIndex={activeTabIndex} 
+                        onTabChange={handleTabChange} 
+                        className="tab-container" 
+                    />
+                </div>
 
                 {activeTabIndex === 0 ? renderAddInvoice() : renderViewInvoice()}
             </Card>

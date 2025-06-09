@@ -260,23 +260,47 @@
   }
 }
 
+.tab-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
 .tab-container {
   width: 100%;
   overflow-x: auto;
   white-space: nowrap;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scrollbar-width: thin; /* For Firefox */
+}
+
+.tab-container::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tab-container::-webkit-scrollbar-thumb {
+  background-color: var(--accent-color);
+  border-radius: 4px;
 }
 
 .tab-container .p-tabmenu-nav {
   display: flex;
   flex-wrap: nowrap;
   justify-content: start;
+  width: max-content; /* Ensure tabs don't wrap */
+  min-width: 100%; /* Take full width when possible */
 }
 
 .tab-container .p-menuitem-link {
   min-width: 120px;
   text-align: center;
+  padding: 0.75rem 1rem;
 }
 
+/* Base styling for tab container */
+.tab-container .p-menuitem-text {
+  display: inline;
+}
 
 @media (max-width: 768px) {
   .p-datatable thead th {
@@ -288,29 +312,40 @@
     padding: 0.5rem;
     font-size: 14px;
   }
-}
-
-
-/* Base styling for tab container */
-.tab-container .p-menuitem-text {
-  display: inline;
-}
-
-/* On small screens, hide text label and just show icon */
-@media (max-width: 768px) {
+  
+  /* Improved tab styling for mobile */
+  .tab-container {
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
   .tab-container .p-menuitem-text {
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .tab-container .p-menuitem-icon {
-    font-size: 8px;
-    margin-right: 0;
+    font-size: 14px;
+    margin-right: 4px;
   }
 
   .tab-container .p-menuitem-link {
     display: flex;
     justify-content: center;
     align-items: center;
-    /* padding: 0.75rem; */
+    padding: 0.75rem 0.5rem;
+    min-width: 100px;
+  }
+  
+  /* Add visual indicator for scrollable tabs */
+  .tab-container::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(to right, transparent, var(--card-bg));
+    pointer-events: none;
+    opacity: 0.8;
   }
 }

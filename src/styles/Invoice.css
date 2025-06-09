@@ -23,11 +23,28 @@
   display: inline-block;
 }
 
+.tab-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
 .tab-container {
   display: flex;
-  /* margin-bottom: var(--spacing-lg); */
   border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
-  overflow: hidden;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scrollbar-width: thin; /* For Firefox */
+}
+
+.tab-container::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tab-container::-webkit-scrollbar-thumb {
+  background-color: var(--accent-color);
+  border-radius: 4px;
 }
 
 .tab-button {
@@ -228,6 +245,59 @@
   padding: var(--spacing-md) var(--spacing-lg);
 }
 
+/* New styles for the form container layout */
+.invoice-form-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  width: 100%;
+}
+
+.invoice-form-section {
+  flex: 1;
+  min-width: 300px;
+}
+
+.invoice-table-section {
+  flex: 1;
+  min-width: 300px;
+}
+
+.invoice-form-card {
+  padding: 1.5rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.form-field .form-label {
+  margin-bottom: 0.5rem;
+  width: 100%;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.form-field .form-control,
+.form-field .file-input {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--border-color);
+  background-color: var(--secondary-bg);
+  color: var(--text-primary);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-field .form-control:focus,
+.form-field .file-input:focus {
+  border-color: var(--accent-color);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.25);
+}
+
 /* Responsive styles */
 @media (max-width: 768px) {
   .invoice-container {
@@ -239,12 +309,38 @@
   }
   
   .tab-container {
-    flex-wrap: wrap;
+    overflow-x: auto;
+    white-space: nowrap;
   }
   
-  .tab-button {
-    padding: var(--spacing-sm);
-    font-size: 0.9rem;
+  .tab-container .p-menuitem-text {
+    font-size: 12px;
+  }
+
+  .tab-container .p-menuitem-icon {
+    font-size: 14px;
+    margin-right: 4px;
+  }
+
+  .tab-container .p-menuitem-link {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.75rem 0.5rem;
+    min-width: 100px;
+  }
+  
+  /* Add visual indicator for scrollable tabs */
+  .tab-wrapper::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(to right, transparent, var(--card-bg));
+    pointer-events: none;
+    opacity: 0.8;
   }
   
   .form-section {
@@ -268,5 +364,20 @@
   
   .table-container {
     max-height: 400px;
+  }
+  
+  /* Force the form and table sections to stack on mobile */
+  .invoice-form-container {
+    flex-direction: column;
+  }
+  
+  .invoice-form-section,
+  .invoice-table-section {
+    width: 100%;
+  }
+  
+  /* Adjust form fields for better mobile display */
+  .form-field {
+    margin-bottom: 1.25rem;
   }
 }
