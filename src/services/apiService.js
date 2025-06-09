@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://plum-cuboid-crest.glitch.me';
+const BASE_URL = 'https://backend-bill-2.onrender.com';
 
 // Create axios instance with default config
 const api = axios.create({

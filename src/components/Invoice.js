@@ -98,7 +98,7 @@ const Invoice = () => {
 
         try {
             setIsLoading(true)
-            const response = await axios.post(`https://plum-cuboid-crest.glitch.me/addInvoice/${userId}`, formData, { headers: { "Content-Type": "multipart/form-data" }, });
+            const response = await axios.post(`https://backend-bill-2.onrender.com/addInvoice/${userId}`, formData, { headers: { "Content-Type": "multipart/form-data" }, });
             toast.current.show({ severity: 'success', summary: 'Success', detail: 'Invoice added successfully' });
             resetForm();
             await fetchInvoices();
