@@ -1,0 +1,116 @@
+.details-container {
+  min-height: 100vh;
+  background: linear-gradient(to top, var(--primary-bg), var(--secondary-bg));
+  width: 100%;
+}
+
+.details-card {
+  background: linear-gradient(to bottom, var(--card-bg), var(--secondary-bg));
+  border-radius: var(--border-radius-lg);
+  /* padding: var(--spacing-xl); */
+  box-shadow: 0 8px 16px var(--shadow-color);
+  width: 100%;
+  transition: transform var(--transition-speed) ease;
+  /* margin-bottom: var(--spacing-lg); */
+}
+
+.details-heading {
+  color: var(--accent-color);
+  margin-bottom: var(--spacing-xl);
+  font-weight: 600;
+  border-bottom: 2px solid var(--accent-color);
+  padding-bottom: var(--spacing-sm);
+  display: inline-block;
+}
+
+.tab-container {
+  display: flex;
+  /* margin-bottom: var(--spacing-lg); */
+  border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
+  overflow: hidden;
+}
+
+.tab-button {
+  flex: 1;
+  padding: var(--spacing-md);
+  border: none;
+  background-color: var(--secondary-bg);
+  color: var(--text-secondary);
+  font-weight: 600;
+  transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+  cursor: pointer;
+  text-align: center;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-button:hover {
+  background-color: var(--hover-color);
+}
+
+.tab-button.active {
+  background-color: var(--accent-color);
+  color: var(--primary-bg);
+  border-bottom-color: var(--accent-color);
+}
+
+.content-container {
+  min-height: 500px;
+  padding: var(--spacing-md);
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .details-container {
+    padding: var(--spacing-sm);
+  }
+  
+  .details-card {
+    padding: var(--spacing-md);
+  }
+  
+  .tab-button {
+    padding: var(--spacing-sm);
+    font-size: 0.9rem;
+  }
+  
+  .content-container {
+    padding: var(--spacing-sm);
+  }
+}
+
+.customer-table {
+  width: 100%;
+  margin-bottom: var(--spacing-lg);
+  border-collapse: collapse;
+}
+
+.customer-table th {
+  background-color: var(--accent-color);
+  color: var(--primary-bg);
+  /* text-align: center; */
+  padding: var(--spacing-md);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.customer-table td {
+  padding: var(--spacing-md);
+  /* text-align: center; */
+  vertical-align: middle;
+}
+
+.customer-table tr:nth-child(even) td {
+  background-color: rgba(45, 45, 45, 0.7);
+}
+
+.customer-table tr:nth-child(odd) td {
+  background-color: rgba(30, 30, 30, 0.7);
+}
+
+.customer-table tfoot td {
+  background-color: var(--card-bg);
+  font-weight: 600;
+  color: var(--accent-color);
+}

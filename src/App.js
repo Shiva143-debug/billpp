@@ -1,57 +1,64 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import './App.css';
-import Customer from "./Customer"
-import Product from "./Product"
-import Shopping from "./Shopping"
-import Home from "./Home"
-import Reports from "./Reports"
-import Login from "./Login"
 import "bootstrap/dist/css/bootstrap.min.css"
-import "primereact/resources/themes/lara-light-indigo/theme.css";
+import "primereact/resources/themes/lara-dark-indigo/theme.css"; // Changed to dark theme
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
-import Checkout from "./Checkout";
-import Invoice from "./Invoice";
+import "./styles/theme.css"; // Import our custom dark theme
 
-import { useEffect, useState } from "react";
-import Details from "./Details";
+import { useEffect } from "react";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Login from "./components/Login";
+import Shopping from "./components/Shopping";
+import Checkout from "./components/Checkout";
+import Details from "./components/Details";
+import Home from "./components/Home";
+import Customer from "./components/Customer";
+import Product from "./components/Product";
+import Reports from "./components/Reports";
+import Invoice from "./components/Invoice";
 
-function App() {
+// Protected route component
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return children;
+};
 
-  const [userId, setUserId] = useState(() => {
-    return localStorage.getItem('userId');
-  });
-
+function AppRoutes() {
+  const { isAuthenticated } = useAuth();
+   const {login} = useAuth();
 
   useEffect(() => {
-    document.title = "shop";
+    document.title = "BillPP - Invoice Management";
   }, []);
 
-  useEffect(() => {
-    if (userId) {
-      localStorage.setItem('userId', userId);
-    } else {
-      localStorage.removeItem('userId');
-    }
-  }, [userId]);
-
-
   return (
+    <Routes>
+      <Route path="/" element={!isAuthenticated ? <Login setUserId={login}/> : <Navigate to="/home" replace />} />
+      <Route path="/home" element={<ProtectedRoute><Home /> </ProtectedRoute>} />
+      <Route path="/customer" element={<ProtectedRoute><Customer /></ProtectedRoute>} />
+      <Route path="/product" element={<ProtectedRoute><Product /></ProtectedRoute>} />
+      <Route path="/shopping" element={<ProtectedRoute><Shopping /></ProtectedRoute>} />
+      <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+      <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+      <Route path="/invoice" element={<ProtectedRoute><Invoice /></ProtectedRoute>} />
+      <Route path="/details" element={<ProtectedRoute><Details /></ProtectedRoute>} />
+    </Routes>
+  );
+}
 
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Login setUserId={setUserId} />}></Route>
-        <Route path="/home" element={<Home id={userId} />}></Route>
-        <Route path="/customer" element={<Customer id={userId} />}></Route>
-        <Route path="/product" element={<Product id={userId} />}></Route>
-        <Route path="/shopping" element={<Shopping id={userId} />}></Route>
-        <Route path="/checkout" element={<Checkout id={userId} />}></Route>
-        <Route path="/reports" element={<Reports id={userId} />}></Route>
-        <Route path="/invoice" element={<Invoice id={userId} />}></Route>
-        <Route path="/details" element={<Details id={userId} />}></Route>
-      </Routes>
-    </BrowserRouter>
-
+function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
