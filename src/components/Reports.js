@@ -473,10 +473,6 @@ const Reports = () => {
 };
 
 export default Reports;
-
-
-// <>
-//     <div className="search-container">
 //         <InputText value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search..." className="search-input"/>
 //     </div>
 
