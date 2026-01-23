@@ -3,7 +3,7 @@ import { Toast } from 'primereact/toast';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useAuth } from '../context/AuthContext';
-import { productAPI, itemsAPI } from '../services/apiService';
+import { productAPI, cartAPI } from '../services/apiService';
 import "../styles/Shopping.css";
 
 function Shopping({ name, date, onHide, itemsAddedToCart, editMode = false, itemData = null }) {
@@ -89,10 +89,10 @@ function Shopping({ name, date, onHide, itemsAddedToCart, editMode = false, item
             const itemDataValues = { userId, name, date, productName: selectedProduct, price, quantity: parseInt(quantity), totalAmount: price * quantity };
 
             if (editMode && itemData) {
-                await itemsAPI.updateItem(userId, itemData.item_id, itemDataValues);
+                await cartAPI.updateItem(userId, itemData.item_id, itemDataValues);
                 toast.current.show({ severity: 'success', summary: 'Success', detail: 'Item updated successfully' });
             } else {
-                await itemsAPI.addItem(userId, itemDataValues);
+                await cartAPI.addItem(userId, itemDataValues);
                 toast.current.show({ severity: 'success', summary: 'Success', detail: 'Item added to cart successfully' });
             }
 
@@ -103,10 +103,10 @@ function Shopping({ name, date, onHide, itemsAddedToCart, editMode = false, item
                 itemsAddedToCart();
             }
             if (onHide) {
-                onHide('Item processed successfully', 'success');
+                onHide('Item Added to Cart successfully', 'success');
             }
         } catch (error) {
-            console.error('Error processing item:', error);
+            console.error('Error Added to Cart item:', error);
             toast.current.show({ severity: 'error', summary: 'Error', detail: error.response?.data?.message || 'Failed to process item' });
         } finally {
             setIsLoading(false);
@@ -122,11 +122,10 @@ function Shopping({ name, date, onHide, itemsAddedToCart, editMode = false, item
     return (
         <div className="shopping-container">
             <Toast ref={toast} />
-            <div className="shopping-card">
+            <div>
                 <h2 className="shopping-heading">
                     {editMode ? 'Update Product' : 'Add Product to Cart'}
                 </h2>
-
                 <form className="shopping-form" onSubmit={handleSubmit}>
                     <div className="row mb-3">
                         <div className="form-group col-md-6 col-12">
@@ -140,38 +139,34 @@ function Shopping({ name, date, onHide, itemsAddedToCart, editMode = false, item
                                 ))}
                             </select>
                         </div>
-
                         <div className="form-group col-md-6 col-12">
                             <label htmlFor="price" className="form-label">Price:</label>
                             <input id="price" type="number" className="form-control" value={price} onChange={(e) => setPrice(e.target.value)} readOnly={!editMode} />
                         </div>
                     </div>
-
                     <div className="row mb-3">
                         <div className="form-group col-md-6 col-12">
                             <label htmlFor="quantity" className="form-label">Quantity:</label>
                             <input id="quantity" type="number" className="form-control" value={quantity} onChange={(e) => setQuantity(e.target.value)} min="1" max={editMode ? undefined : availableQuantity} />
-
-                            <small className="form-text"> Available: {availableQuantity} items
-                            </small>
-
+                            <small className="form-text">Available: {availableQuantity} items</small>
                         </div>
-
                         <div className="form-group col-md-6 col-12">
                             <label htmlFor="totalAmount" className="form-label">Total Amount:</label>
                             <input id="totalAmount" type="number" className="form-control" value={(price * quantity) || 0} readOnly />
                         </div>
                     </div>
-
                     <div className="d-flex justify-content-between flex-wrap">
-                        <button type="button" onClick={handleCancel} className="btn btn-secondary mb-2" disabled={isLoading}>Cancel</button>
-
+                        <button type="button" onClick={handleCancel} className="btn btn-secondary mb-2" disabled={isLoading}>
+                            Cancel
+                        </button>
                         {isLoading ? (
                             <div className="spinner-container">
                                 <ProgressSpinner style={{ width: '40px', height: '40px' }} strokeWidth="4" animationDuration=".5s" />
                             </div>
                         ) : (
-                            <button type="submit" className="btn btn-primary mb-2">{editMode ? 'Update Product' : 'Add to Cart'}</button>
+                            <button type="submit" className="btn btn-primary mb-2">
+                                {editMode ? 'Update Product' : 'Add to Cart'}
+                            </button>
                         )}
                     </div>
                 </form>

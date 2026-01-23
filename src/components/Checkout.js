@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode.react';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -10,7 +10,6 @@ import { InputNumber } from 'primereact/inputnumber';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { productAPI, checkoutAPI } from '../services/apiService';
 import { useAuth } from '../context/AuthContext';
-import Header from './Header';
 import '../styles/Checkout.css';
 
 const Checkout = () => {
@@ -85,6 +84,15 @@ const Checkout = () => {
     }
 
     const { selectedOption, address, contactNo, grandTotal, items, date } = orderDetails;
+
+    const formatDisplayDate = (dateString) => {
+        if (!dateString) return '';
+        const d = new Date(dateString);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = String(d.getFullYear()).slice(-2);
+        return `${day}/${month}/${year}`;
+    };
 
 
     const handlePrint = async () => {
@@ -233,9 +241,9 @@ const Checkout = () => {
                         <div className="company-logo">
                             <img src="https://res.cloudinary.com/dxgbxchqm/image/upload/v1704974380/comapnylogo_gh2jvq.jpg" alt="Company Logo" />
                             <div>
-                                {!isMobile && <h2 className="company-name">WhereSoftTechnologies</h2>}
-                                {isMobile && <h6 className="company-name">WhereSoftTechnologies</h6>}
-                                <p><strong>Address:</strong> pragathinagar</p>
+                                {!isMobile && <h2 className="company-name">BillApp</h2>}
+                                {isMobile && <h6 className="company-name">BillApp</h6>}
+                                <p> pragathinagar</p>
                             </div>
                         </div>
                         {!showPayButton && (
@@ -252,7 +260,7 @@ const Checkout = () => {
                             <p><strong>Contact No:</strong> {contactNo}</p>
                         </div>
                         <div className="invoice-date">
-                            <p><strong>Date:</strong> {date}</p>
+                            <p><strong>Date:</strong> {formatDisplayDate(date)}</p>
                         </div>
                     </div>
 
@@ -290,7 +298,7 @@ const Checkout = () => {
                     <QRCode value={"shiva"} size={isMobile ? 300 : 400} className="qr-code" />
                     <div className="action-buttons">
                         <Button label="Back" icon="pi pi-arrow-left" className="p-button-info" onClick={onBack} disabled={isLoading} />
-                        <Button label="Payment Completed" icon="pi pi-check" className="p-button-success" onClick={paymentCompleted} disabled={isLoading} />
+                        <Button label="UPI Pay" icon="pi pi-check" className="p-button-success" onClick={paymentCompleted} disabled={isLoading} />
                     </div>
                 </Card>
             )}
@@ -325,13 +333,11 @@ const Checkout = () => {
                         <Button label="Back" icon="pi pi-arrow-left" className="p-button-info" onClick={onBack} disabled={isLoading} />
 
                         {remainingBalance === 0 && (
-                            <Button label="Cash Payment Completed" icon="pi pi-check" className="p-button-success" onClick={cashpaymentCompleted} disabled={isLoading} />
+                            <Button label="Cash Payment" icon="pi pi-check" className="p-button-success" onClick={cashpaymentCompleted} disabled={isLoading} />
                         )}
                     </div>
                 </Card>
             )}
-
-
         </div>
     );
 };

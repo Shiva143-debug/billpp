@@ -2,11 +2,12 @@
   width: 100%;
   background-color: #1f1f1f;
   color: white;
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
   position: sticky;
   top: 0;
   z-index: 1000;
-  border-bottom: 1px solid white;
+  border-bottom: 1px solid #333;
+  height: 60px;
 }
 
 .nav-content {
@@ -14,12 +15,32 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.logo-link {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.logo-icon {
+  font-size: 1.8rem;
+  color: #007bff;
 }
 
 .logo-container h3 {
   margin: 0;
-  font-size: 1.5rem;
-  color: white;
+  font-size: 1.3rem;
+  color: #007bff;
+  font-weight: 700;
+  text-decoration: none;
 }
 
 .nav-menu {
@@ -34,22 +55,35 @@
   color: white;
   text-decoration: none;
   font-weight: 500;
+  font-size: 0.95rem;
+  transition: color 0.3s ease;
+}
+
+.nav-menu li a:hover {
+  color: #00dfc4;
 }
 
 .active-nav {
   color: #00dfc4;
   font-weight: bold;
   border-bottom: 2px solid #00dfc4;
+  padding-bottom: 0.25rem;
 }
 
 .logout-desktop-btn {
   background-color: #ff4d4d;
   color: white;
   border: none;
-  padding: 8px 14px;
-  border-radius: 5px;
-  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 600;
   cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease;
+}
+
+.logout-desktop-btn:hover {
+  background-color: #ff2e2e;
 }
 
 .nav-menu-mobile {
@@ -57,13 +91,29 @@
 }
 
 @media (max-width: 768px) {
+  .nav-header {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .nav-content {
+    gap: 0.5rem;
+  }
+
+  .logo-container h3 {
+    font-size: 1.1rem;
+  }
+
+  .logo-icon {
+    font-size: 1.5rem;
+  }
+
   .nav-menu {
     display: none;
   }
 
   .logout-desktop-btn {
-    padding: 6px 10px;
-    font-size: 0.875rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
   }
 
   .nav-menu-mobile {

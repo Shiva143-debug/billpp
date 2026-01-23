@@ -7,10 +7,11 @@ import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
 import { Calendar } from 'primereact/calendar';
 import { Card } from 'primereact/card';
+import { ProgressSpinner } from 'primereact/progressspinner';
 import { useAuth } from '../context/AuthContext';
 import Header from "./Header";
-import "../styles/Reports.css";
 import { customerAPI, productAPI, reportsAPI } from "../services/apiService";
+import "../styles/Reports.css";
 
 const Reports = () => {
     const { userId } = useAuth();
@@ -22,13 +23,13 @@ const Reports = () => {
     const [reportData, setReportData] = useState([]);
     const [paymentTypeData, setPaymentTypeData] = useState([]);
     const [cashReportData, setCashReportData] = useState([]);
+    const [recentPurchases, setRecentPurchases] = useState([]);
     const [date, setDate] = useState(null);
     const [cashDate, setCashDate] = useState(null);
     const [paymentType, setPaymentType] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [isLoading, setIsLoading] = useState(true);
     const [grandTotal, setGrandTotal] = useState(0);
-
 
     const tabItems = [
         { label: 'By Date', icon: 'pi pi-calendar' },
@@ -69,11 +70,10 @@ const Reports = () => {
         }
     }, [userId]);
 
-
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const response = await productAPI.getProducts(userId); // Axios call
+                const response = await productAPI.getProducts(userId);
                 const data = response.data;
 
                 if (Array.isArray(data)) {
@@ -88,8 +88,6 @@ const Reports = () => {
             } catch (error) {
                 console.error('Error fetching products:', error);
                 setProducts([]);
-            } finally {
-                setIsLoading(false);
             }
         };
 
@@ -97,6 +95,31 @@ const Reports = () => {
             fetchProducts();
         }
     }, [userId]);
+
+    // Fetch recent purchases on initial load
+    useEffect(() => {
+        const fetchRecentPurchases = async () => {
+            setIsLoading(true);
+            try {
+                const response = await reportsAPI.getRecentReports(userId);
+                if (Array.isArray(response.data)) {
+                    setRecentPurchases(response.data);
+                    calculateGrandTotal(response.data);
+                } else {
+                    setRecentPurchases([]);
+                }
+            } catch (error) {
+                console.error('Error fetching recent purchases:', error);
+                setRecentPurchases([]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (userId && activeTabIndex === 0 && !date) {
+            fetchRecentPurchases();
+        }
+    }, [userId, activeTabIndex]);
 
     useEffect(() => {
         const fetchReportData = async () => {
@@ -111,7 +134,6 @@ const Reports = () => {
                             const formattedDate = formatDate(date);
                             response = await reportsAPI.getReportsByDate(formattedDate, userId)
                             const data = response.data
-                            console.log("Date Response", data)
                             setReportData(data);
                             calculateGrandTotal(data);
                         }
@@ -121,7 +143,6 @@ const Reports = () => {
                         if (selectedOption) {
                             response = await reportsAPI.getReportsByName(selectedOption, userId)
                             const data = response.data
-                            console.log("Date Response", data)
                             setReportData(data);
                             calculateGrandTotal(data);
                         }
@@ -131,7 +152,6 @@ const Reports = () => {
                         if (selectedOption) {
                             response = await reportsAPI.getReportsByProductName(selectedOption, userId)
                             const data = response.data
-                            console.log("Date Response", data)
                             setReportData(data);
                             calculateGrandTotal(data);
                         }
@@ -141,8 +161,9 @@ const Reports = () => {
                         if (paymentType) {
                             response = await reportsAPI.getReportsByPaymentType(paymentType, userId)
                             const data = response.data
-                            console.log("Date Response", data)
-                            setPaymentTypeData(data);
+                            setReportData(data);
+                            calculateGrandTotal(data);
+                            // setPaymentTypeData(data);
                         }
                         break;
 
@@ -151,8 +172,8 @@ const Reports = () => {
                             const formattedDate = formatDate(cashDate);
                             response = await reportsAPI.getCashReportByDate(formattedDate, userId)
                             const data = response.data
-                            console.log("Date Response", data)
                             setCashReportData(data);
+                            // calculateGrandTotal(data);
                         }
                         break;
 
@@ -180,11 +201,20 @@ const Reports = () => {
         return `${year}-${month}-${day}`;
     };
 
+    const formatDisplayDate = (dateString) => {
+        if (!dateString) return '';
+        const d = new Date(dateString);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = String(d.getFullYear()).slice(-2);
+        return `${day}/${month}/${year}`;
+    };
+
     const calculateGrandTotal = (data) => {
         if (!Array.isArray(data)) return;
 
         const total = data.reduce((acc, item) => {
-            return acc + (parseFloat(item.total_amount) || 0);
+            return acc + (parseFloat(item.total_amount || item.amount) || 0);
         }, 0);
 
         setGrandTotal(total);
@@ -201,6 +231,7 @@ const Reports = () => {
         setReportData([]);
         setPaymentTypeData([]);
         setCashReportData([]);
+        setSearchTerm("");
 
         switch (e.index) {
             case 0:
@@ -230,21 +261,21 @@ const Reports = () => {
             return (
                 (item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (item.product_name && item.product_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (item.date && new Date(item.date).toLocaleDateString().includes(searchTerm))
+                (item.date && formatDisplayDate(item.date).includes(searchTerm))
             );
         });
     };
 
     const dateTemplate = (rowData) => {
-        return new Date(rowData.date).toLocaleDateString();
+        return formatDisplayDate(rowData.date);
     };
 
     const renderReportContent = () => {
         if (isLoading) {
             return (
                 <div className="loading-container">
-                    <img src="https://res.cloudinary.com/dxgbxchqm/image/upload/w_1000,ar_16:9,c_fill,g_auto,e_sharpen/v1716964033/large_xjsnwr.png" alt="Loading" className="loading-image" />
-                    <h3 className="loading-text">Loading Report Data...</h3>
+                    <ProgressSpinner style={{ width: '50px', height: '50px' }} strokeWidth="4" animationDuration=".8s" />
+                    <h4 className="loading-text">Loading Report Data...</h4>
                 </div>
             );
         }
@@ -268,11 +299,15 @@ const Reports = () => {
     const renderDateReport = () => {
         return (
             <>
-                <div className="filter-container">
-                    <label className="filter-label">Select Date:</label>
-                    <Calendar value={date} onChange={(e) => setDate(e.value)} dateFormat="yy-mm-dd" className="filter-input" showIcon />
+                <div className="d-flex justify-content-end">
+                    <Calendar value={date} onChange={(e) => setDate(e.value)} dateFormat="dd/mm/yy" showIcon placeholder="Choose date..." />
                 </div>
-
+                {!date && recentPurchases.length > 0 && (
+                    <>
+                        <h4 style={{ color: 'var(--text-primary)' }}>Recent Purchases</h4>
+                        {renderRecentPurchasesTable()}
+                    </>
+                )}
                 {date && renderReportTable()}
             </>
         );
@@ -281,11 +316,15 @@ const Reports = () => {
     const renderCustomerReport = () => {
         return (
             <>
-                <div className="filter-container">
-                    <label className="filter-label">Select Customer Name:</label>
-                    <Dropdown value={selectedOption} options={customers} onChange={(e) => setSelectedOption(e.value)} placeholder="Select a customer" className="filter-input" />
+                <div className="d-flex justify-content-end">
+                    <Dropdown value={selectedOption} options={customers} onChange={(e) => setSelectedOption(e.value)} placeholder="Choose customer..." />
                 </div>
-
+                {!selectedOption && recentPurchases.length > 0 && (
+                    <>
+                        <h4 style={{ color: 'var(--text-primary)' }}>Recent Purchases</h4>
+                        {renderRecentPurchasesTable()}
+                    </>
+                )}
                 {selectedOption && renderReportTable()}
             </>
         );
@@ -294,11 +333,15 @@ const Reports = () => {
     const renderProductReport = () => {
         return (
             <>
-                <div className="filter-container">
-                    <label className="filter-label">Select Product Name:</label>
-                    <Dropdown value={selectedOption} options={products} onChange={(e) => setSelectedOption(e.value)} placeholder="Select a product" className="filter-input" />
+                <div className="d-flex justify-content-end">
+                    <Dropdown value={selectedOption} options={products} onChange={(e) => setSelectedOption(e.value)} placeholder="Choose product..." />
                 </div>
-
+                {!selectedOption && recentPurchases.length > 0 && (
+                    <>
+                        <h4 style={{ color: 'var(--text-primary)' }}>Recent Purchases</h4>
+                        {renderRecentPurchasesTable()}
+                    </>
+                )}
                 {selectedOption && renderReportTable()}
             </>
         );
@@ -307,52 +350,35 @@ const Reports = () => {
     const renderPaymentReport = () => {
         return (
             <>
-                <div className="filter-container">
-                    <label className="filter-label">Select Payment Type:</label>
-                    <Dropdown value={paymentType} options={paymentOptions} onChange={(e) => setPaymentType(e.value)} placeholder="Select payment type" className="filter-input" />
+                <div className="d-flex justify-content-end">
+                    <Dropdown value={paymentType} options={paymentOptions} onChange={(e) => setPaymentType(e.value)} placeholder="Choose payment type..." />
                 </div>
-
-                {paymentType && (
+                {!paymentType && recentPurchases.length > 0 && (
                     <>
-                        <div className="search-container">
-                            <span className="p-input-icon-left">
-                                {/* <i className="pi pi-search" /> */}
-                                <InputText value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search..." className="search-input" />
-                            </span>
-                        </div>
-
-                        <div className="table-container">
-                            <DataTable paginator rows={5} value={filterData(paymentTypeData, searchTerm)} className="reports-table" responsiveLayout="scroll" stripedRows emptyMessage="No payment records found"
-                                footer={
-                                    <div className="summary-container">
-                                        <div className="summary-box">
-                                            <span className="summary-text">Total Amount:</span>
-                                            <span className="summary-value">
-                                                {paymentTypeData.reduce((acc, item) => acc + (parseFloat(item.amount) || 0), 0).toFixed(2)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                }
-                            >
-                                <Column field="id" header="Bill No" />
-                                <Column field="name" header="Name" />
-                                <Column field="date" header="Date" body={dateTemplate} />
-                                <Column field="amount" header="Amount" />
-                            </DataTable>
-                        </div>
+                        <h4 style={{ color: 'var(--text-primary)' }}>Recent Purchases</h4>
+                        {renderRecentPurchasesTable()}
                     </>
                 )}
+                {paymentType && renderReportTable()}
             </>
         );
     };
 
+
     const renderCashReport = () => {
         return (
             <>
-                <div className="filter-container">
-                    <label className="filter-label">Select Date:</label>
-                    <Calendar value={cashDate} onChange={(e) => setCashDate(e.value)} dateFormat="yy-mm-dd" className="filter-input" showIcon />
+                <div className="d-flex justify-content-end">
+                    {/* <label className="filter-label">Select Date:</label> */}
+                    <Calendar value={cashDate} onChange={(e) => setCashDate(e.value)} dateFormat="dd/mm/yy" showIcon placeholder="Choose date..." />
                 </div>
+
+                {!cashDate && recentPurchases.length > 0 && (
+                    <>
+                        <h4 style={{ color: 'var(--text-primary)' }}>Recent Purchases</h4>
+                        {renderRecentPurchasesTable()}
+                    </>
+                )}
 
                 {cashDate && (
                     <div className="table-container">
@@ -362,24 +388,24 @@ const Reports = () => {
                                     <div className="summary-box">
                                         <span className="summary-text">Total Amount:</span>
                                         <span className="summary-value">
-                                            {cashReportData.reduce((acc, item) => acc + (parseFloat(item.grand_total) || 0), 0).toFixed(2)}
+                                            ₹{cashReportData.reduce((acc, item) => acc + (parseFloat(item.grand_total) || 0), 0).toFixed(2)}
                                         </span>
                                     </div>
                                 </div>
                             }
                         >
-                            <Column field="name" header="Name" />
-                            <Column field="twothousandnotes" header="2000 Notes" />
-                            <Column field="fivehundrednotes" header="500 Notes" />
-                            <Column field="twohundrednotes" header="200 Notes" />
-                            <Column field="hundrednotes" header="100 Notes" />
-                            <Column field="fiftynotes" header="50 Notes" />
-                            <Column field="twentynotes" header="20 Notes" />
-                            <Column field="tennotes" header="10 Notes" />
-                            <Column field="fiverupees" header="5 Rupees" />
-                            <Column field="tworupees" header="2 Rupees" />
-                            <Column field="onerupees" header="1 Rupees" />
-                            <Column field="grand_total" header="Grand Total" />
+                            <Column field="name" header="Submitted By" />
+                            <Column field="twothousandnotes" header="2000" />
+                            <Column field="fivehundrednotes" header="500" />
+                            <Column field="twohundrednotes" header="200" />
+                            <Column field="hundrednotes" header="100" />
+                            <Column field="fiftynotes" header="50" />
+                            <Column field="twentynotes" header="20" />
+                            <Column field="tennotes" header="10" />
+                            <Column field="fiverupees" header="5" />
+                            <Column field="tworupees" header="2" />
+                            <Column field="onerupees" header="1" />
+                            <Column field="grand_total" header="Total" />
                         </DataTable>
                     </div>
                 )}
@@ -387,32 +413,17 @@ const Reports = () => {
         );
     };
 
-    const renderReportTable = () => {
-        const filteredData = filterData(reportData, searchTerm);
+    const renderRecentPurchasesTable = () => {
+        const filteredData = filterData(recentPurchases, searchTerm);
+        const tableTotal = filteredData.reduce((acc, item) => acc + (parseFloat(item.total_amount || 0) || 0), 0);
 
         return (
             <>
-                <div className="search-container">
-                    <span className="p-input-icon-left">
-                        {/* <i className="pi pi-search" /> */}
-                        <InputText value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search..." className="search-input" />
-                    </span>
-                </div>
-
                 <div className="table-container">
-                    <DataTable paginator rows={5} value={filteredData} className="reports-table" responsiveLayout="scroll" stripedRows emptyMessage="No records found"
-                        footer={
-                            <div className="summary-container">
-                                <div className="summary-box">
-                                    <span className="summary-text">Grand Total:</span>
-                                    <span className="summary-value">{grandTotal.toFixed(2)}</span>
-                                </div>
-                            </div>
-                        }
-                    >
-                        {reportType !== 'Date' && <Column field="date" header="Date" body={dateTemplate} />}
-                        {reportType !== 'Customer' && <Column field="name" header="Name" />}
-                        {reportType !== 'Product' && <Column field="product_name" header="Product Name" />}
+                    <DataTable paginator rows={5} value={filteredData} className="reports-table" responsiveLayout="scroll" stripedRows emptyMessage="No purchase records found" footer={<div className="summary-container"><div className="summary-box"><span className="summary-text">Grand Total:</span><span className="summary-value">₹{tableTotal.toFixed(2)}</span></div></div>}>
+                        <Column field="date" header="Date" body={dateTemplate} />
+                        <Column field="name" header="Customer Name" />
+                        <Column field="product_name" header="Product Name" />
                         <Column field="price" header="Price" />
                         <Column field="quantity" header="Quantity" />
                         <Column field="total_amount" header="Total Amount" />
@@ -422,25 +433,71 @@ const Reports = () => {
         );
     };
 
-    return (
-        <div className="reports-container">
-            <Header />
-            <Card className="reports-card">
-                {/* <h2 className="reports-heading">Reports</h2> */}
-                
-                <div className="tab-wrapper">
-                    <TabMenu 
-                        model={tabItems} 
-                        activeIndex={activeTabIndex} 
-                        onTabChange={handleTabChange} 
-                        className="tab-container" 
-                    />
-                </div>
+    const renderReportTable = () => {
+        const filteredData = filterData(reportData, searchTerm);
+        const tableTotal = filteredData.reduce((acc, item) => acc + (parseFloat(item.total_amount || item.amount || 0) || 0), 0);
 
-                {renderReportContent()}
-            </Card>
+        return (
+            <>
+                <div className="search-container">
+                    <InputText value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search..." className="search-input" />
+                </div>
+                <div className="table-container">
+                    <DataTable paginator rows={5} value={filteredData} className="reports-table" responsiveLayout="scroll" stripedRows emptyMessage="No records found" footer={<div className="summary-container"><div className="summary-box"><span className="summary-text">Grand Total:</span><span className="summary-value">₹{tableTotal.toFixed(2)}</span></div></div>}>
+                        {reportType !== 'Date' && <Column field="date" header="Date" body={dateTemplate} />}
+                        {reportType !== 'Customer' && <Column field="name" header="Customer Name" />}
+                        {(reportType !== 'Product' && reportType !== 'Payment') && <Column field="product_name" header="Product Name" />}
+                        {reportType !== 'Payment' && <Column field="price" header="Price" />}
+                        {reportType !== 'Payment' && <Column field="quantity" header="Quantity" />}
+                        {reportType !== 'Payment' && <Column field="total_amount" header="Total Amount" />}
+                        {reportType === 'Payment' && <Column field="amount" header="Total Amount" />}
+                    </DataTable>
+                </div>
+            </>
+        );
+    };
+
+    return (
+        <div>
+            <Header />
+            <div className="reports-container">
+                <Card className="reports-card">
+                    <div className="tab-wrapper">
+                        <TabMenu model={tabItems} activeIndex={activeTabIndex} onTabChange={handleTabChange} className="tab-container" />
+                    </div>
+                    {renderReportContent()}
+                </Card>
+            </div>
         </div>
     );
 };
 
 export default Reports;
+
+
+// <>
+//     <div className="search-container">
+//         <InputText value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search..." className="search-input"/>
+//     </div>
+
+//     <div className="table-container">
+//         <DataTable paginator rows={5} value={filterData(paymentTypeData, searchTerm)}
+//             className="reports-table"responsiveLayout="scroll" stripedRows emptyMessage="No payment records found"
+//             footer={
+//                 <div className="summary-container">
+//                     <div className="summary-box">
+//                         <span className="summary-text">Total Amount:</span>
+//                         <span className="summary-value">
+//                             ₹{paymentTypeData.reduce((acc, item) => acc + (parseFloat(item.amount) || 0), 0).toFixed(2)}
+//                         </span>
+//                     </div>
+//                 </div>
+//             }
+//         >
+//             <Column field="id" header="Bill No" />
+//             <Column field="name" header="Customer Name" />
+//             <Column field="date" header="Date" body={dateTemplate} />
+//             <Column field="amount" header="Amount" />
+//         </DataTable>
+//     </div>
+// </>

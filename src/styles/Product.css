@@ -1,12 +1,6 @@
 .product-container {
-  /* min-height: 100vh; */
   background: linear-gradient(to top, var(--primary-bg), var(--secondary-bg));
-  /* padding: var(--spacing-lg); */
-  padding-top: 20px;
-  /* display: flex;
-  justify-content: center;
-  align-items: flex-start; */
-  
+  padding-top: 20px;  
   width: 100vw;
 }
 

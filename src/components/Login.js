@@ -2,11 +2,9 @@ import { useState, useRef } from 'react';
 import { useNavigate } from "react-router-dom";
 import { Toast } from 'primereact/toast';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { useAuth } from '../context/AuthContext';
-
-import "../styles/Login.css";
 import { authAPI } from '../services/apiService';
 import { ProgressSpinner } from 'primereact/progressspinner';
+import "../styles/Login.css";
 
 function Login({ setUserId }) {
     const toast = useRef(null);
@@ -15,10 +13,8 @@ function Login({ setUserId }) {
     const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
     const [mobileNo, setMobileNumber] = useState("");
-    const [address, setAddress] = useState("");
-    const [userName, setLoginUserName] = useState("");
+    const [loginmobileNo, setLoginMobileNo] = useState("");
     const [password, setPassword] = useState("");
-
     const [showForget, setShowForget] = useState(false);
     const [updatedPassword, setUpdatedPassword] = useState("");
     const [updatedConfirmPassword, setUpdatedConfirmPassword] = useState("");
@@ -44,12 +40,7 @@ function Login({ setUserId }) {
             toast.current.show({ severity: 'warn', summary: 'Warning', detail: 'Please enter mobile number' });
             return;
         }
-        else if (!address) {
-            toast.current.show({ severity: 'warn', summary: 'Warning', detail: 'Please enter address' });
-            return;
-        }
-
-        const userData = { FullName: fullName, email, mobileNo, address };
+        const userData = { FullName: fullName, email, mobileNo };
 
         try {
             setIsLoading(true);
@@ -60,7 +51,6 @@ function Login({ setUserId }) {
                 setFullName("");
                 setEmail("");
                 setMobileNumber("");
-                setAddress("");
             } else {
                 toast.current.show({ severity: 'error', summary: 'Error', detail: response.data.message || "Registration failed" });
             }
@@ -75,8 +65,8 @@ function Login({ setUserId }) {
     const handleLoginFormSubmit = async (e) => {
         e.preventDefault();
 
-        if (!userName) {
-            toast.current.show({ severity: 'warn', summary: 'Warning', detail: 'Please enter valid Username' });
+        if (!loginmobileNo) {
+            toast.current.show({ severity: 'warn', summary: 'Warning', detail: 'Please enter valid mobile Number' });
             return;
         }
         else if (!password) {
@@ -84,7 +74,7 @@ function Login({ setUserId }) {
             return;
         }
 
-        const credentials = { userName, password };
+        const credentials = { mobileNo: loginmobileNo, password };
 
         try {
             setIsLoading(true);
@@ -93,7 +83,7 @@ function Login({ setUserId }) {
             if (status === 200) {
                 toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Successful' });
                 setUserId(data.result.user_id);
-                setLoginUserName("");
+                setLoginMobileNo("");
                 setPassword("");
                 setTimeout(() => {
                     navigate("/home");
@@ -183,23 +173,18 @@ function Login({ setUserId }) {
                     {activeTab === 'register' && (
                         <div id="register" >
                             <div className="form-group">
-                                <label htmlFor="fullName">Full Name:</label>
-                                <input id="fullName" type="text" placeholder="Enter your full name" value={fullName} onChange={(e) => setFullName(e.target.value)} className="form-control" />
+                                <label htmlFor="fullName">Name:</label>
+                                <input id="fullName" type="text" placeholder="Enter your full name" value={fullName} onChange={(e) => setFullName(e.target.value)} className="form-control" disabled={loading} />
                             </div>
 
                             <div className="form-group">
                                 <label htmlFor="email">Email:</label>
-                                <input id="email" type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} className="form-control" />
+                                <input id="email" type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} className="form-control" disabled={loading} />
                             </div>
 
                             <div className="form-group">
                                 <label htmlFor="mobileNo">Mobile Number:</label>
-                                <input id="mobileNo" type="number" placeholder="Enter your mobile number" value={mobileNo} onChange={(e) => setMobileNumber(e.target.value)} className="form-control" />
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="address">Address:</label>
-                                <input id="address" type="text" placeholder="Enter your address" value={address} onChange={(e) => setAddress(e.target.value)} className="form-control" />
+                                <input id="mobileNo" type="number" placeholder="Enter your mobile number" value={mobileNo} onChange={(e) => setMobileNumber(e.target.value)} className="form-control" disabled={loading} />
                             </div>
 
                             <div className="button-container">
@@ -217,16 +202,16 @@ function Login({ setUserId }) {
                     {activeTab === 'login' && (
                         <div id="login">
                             <div className="form-group">
-                                <label htmlFor="userName">Username:</label>
-                                <input id="userName" type="text" placeholder="Enter your username" value={userName} onChange={(e) => setLoginUserName(e.target.value)} className="form-control" />
+                                <label htmlFor="loginmobileNo">Mobile Number:</label>
+                                <input id="loginmobileNo" type="text" placeholder="Enter your mobile Number" value={loginmobileNo} onChange={(e) => setLoginMobileNo(e.target.value)} className="form-control" disabled={loading} />
                             </div>
 
                             <div className="form-group">
                                 <label htmlFor="password">Password:</label>
-                                <input id="password" type="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-control" />
+                                <input id="password" type="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-control" disabled={loading} />
                             </div>
 
-                            <div className="forgot-password" onClick={handleForgotLinkClick}>Forgot Password?</div>
+                            <div className="forgot-password" onClick={!loading ? handleForgotLinkClick : null} style={{ cursor: loading ? 'not-allowed' : 'pointer' }}>Forgot Password?</div>
 
                             <div className="button-container">
                                 {loading ? (
@@ -246,17 +231,17 @@ function Login({ setUserId }) {
                     <div id="reset">
                         <div className="form-group">
                             <label htmlFor="resetEmail">Email:</label>
-                            <input id="resetEmail" type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} className="form-control" />
+                            <input id="resetEmail" type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} className="form-control" disabled={loading} />
                         </div>
 
                         <div className="form-group">
                             <label htmlFor="newPassword">New Password:</label>
-                            <input id="newPassword" type="password" placeholder="Enter new password" value={updatedPassword} onChange={(e) => setUpdatedPassword(e.target.value)} className="form-control" />
+                            <input id="newPassword" type="password" placeholder="Enter new password" value={updatedPassword} onChange={(e) => setUpdatedPassword(e.target.value)} className="form-control" disabled={loading} />
                         </div>
 
                         <div className="form-group">
                             <label htmlFor="confirmPassword">Confirm Password:</label>
-                            <input id="confirmPassword" type="password" placeholder="Confirm new password" value={updatedConfirmPassword} onChange={(e) => setUpdatedConfirmPassword(e.target.value)} className={`form-control ${!passwordsMatch ? 'is-invalid' : ''}`} />
+                            <input id="confirmPassword" type="password" placeholder="Confirm new password" value={updatedConfirmPassword} onChange={(e) => setUpdatedConfirmPassword(e.target.value)} className={`form-control ${!passwordsMatch ? 'is-invalid' : ''}`} disabled={loading} />
                             {!passwordsMatch && (
                                 <div className="invalid-feedback"> Passwords do not match</div>
                             )}

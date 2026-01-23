@@ -1,9 +1,6 @@
 .customer-container {
   height: 100vh;
   background: linear-gradient(to top, var(--primary-bg), var(--secondary-bg));
-  /* padding: var(--spacing-lg); */
-  /* padding-top: 20px; */
-
   width: 100vw;
 }
 
@@ -75,11 +72,6 @@
   margin-top: var(--spacing-xs);
 }
 
-/* .button-container {
-  display: flex;
-  justify-content: space-between;
-  margin-top: var(--spacing-lg);
-} */
 
 .back-button {
   background-color: var(--secondary-bg);
@@ -120,20 +112,9 @@
 
 /* Responsive styles */
 @media (max-width: 768px) {
-  .customer-container {
-    /* padding: var(--spacing-md); */
-  }
-
   .customer-card {
     padding: var(--spacing-lg);
   }
-
-  /* .button-container {
-    display: flex;
-    justify-content: space-between;
-    margin-top: var(--spacing-lg);
-  } */
-
   .back-button,
   .submit-button {
     width: 100%;

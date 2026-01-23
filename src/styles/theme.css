@@ -13,17 +13,17 @@
   --hover-color: #3d3d3d;
   --shadow-color: rgba(0, 0, 0, 0.5);
   
-  /* Spacing */
+  /* Spacing - Standardized minimal spacing */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
+  --spacing-md: 0.75rem;
+  --spacing-lg: 1rem;
+  --spacing-xl: 1.5rem;
   
   /* Border radius */
   --border-radius-sm: 4px;
-  --border-radius-md: 8px;
-  --border-radius-lg: 12px;
+  --border-radius-md: 6px;
+  --border-radius-lg: 8px;
   
   /* Transitions */
   --transition-speed: 0.3s;
@@ -58,6 +58,8 @@ body {
   border: none;
   color: var(--primary-bg);
   transition: background-color var(--transition-speed) ease;
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius-sm);
 }
 
 .btn-primary:hover {
@@ -68,6 +70,8 @@ body {
   background-color: var(--secondary-bg);
   border: 1px solid var(--border-color);
   color: var(--text-primary);
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius-sm);
 }
 
 .btn-secondary:hover {
@@ -78,6 +82,8 @@ body {
   background-color: var(--error-color);
   border: none;
   color: var(--primary-bg);
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius-sm);
 }
 
 .btn-danger:hover {
@@ -88,6 +94,8 @@ body {
   background-color: var(--success-color);
   border: none;
   color: var(--primary-bg);
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius-sm);
 }
 
 .btn-success:hover {
@@ -100,7 +108,8 @@ body {
   border: 1px solid var(--border-color);
   color: var(--text-primary);
   border-radius: var(--border-radius-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
 }
 
 .form-control:focus {
@@ -108,16 +117,26 @@ body {
   box-shadow: 0 0 0 0.2rem rgba(187, 134, 252, 0.25);
 }
 
+.form-label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
 /* Table styling */
 .table {
   color: var(--text-primary);
   border-color: var(--border-color);
+  margin-bottom: 0;
 }
 
 .table thead th {
   background-color: var(--secondary-bg);
   color: var(--text-primary);
   border-color: var(--border-color);
+  padding: 0.75rem;
+  font-weight: 600;
 }
 
 .table-bordered {
@@ -161,6 +180,53 @@ body {
 
 .modal-footer {
   border-top-color: var(--border-color);
+}
+
+/* PrimeReact Dialog styling - Fix z-index and interaction issues */
+.p-dialog {
+  z-index: 10000 !important;
+}
+
+.p-dialog .p-dialog-mask {
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+}
+
+.p-dialog-content {
+  pointer-events: auto !important;
+}
+
+.p-dialog input,
+.p-dialog textarea,
+.p-dialog button,
+.p-dialog select {
+  pointer-events: auto !important;
+}
+
+/* Ensure dialog buttons are clickable */
+.p-dialog .btn {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+.p-dialog .btn:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+.p-dialog input[type="text"],
+.p-dialog input[type="number"],
+.p-dialog input[type="date"],
+.p-dialog textarea {
+  pointer-events: auto !important;
+  cursor: text !important;
+}
+
+.p-dialog input[type="text"]:focus,
+.p-dialog input[type="number"]:focus,
+.p-dialog input[type="date"]:focus,
+.p-dialog textarea:focus {
+  outline: none;
 }
 
 /* Toast styling */

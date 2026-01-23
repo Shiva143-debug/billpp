@@ -17,6 +17,7 @@ import Customer from "./components/Customer";
 import Product from "./components/Product";
 import Reports from "./components/Reports";
 import Invoice from "./components/Invoice";
+import SplashScreen from "./components/SplashScreen";
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
@@ -30,19 +31,22 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAppLoading } = useAuth();
    const {login} = useAuth();
 
   useEffect(() => {
     document.title = "BillPP - Invoice Management";
   }, []);
 
+  if (isAppLoading) {
+    return <SplashScreen />;
+  }
+
   return (
     <Routes>
       <Route path="/" element={!isAuthenticated ? <Login setUserId={login}/> : <Navigate to="/home" replace />} />
       <Route path="/home" element={<ProtectedRoute><Home /> </ProtectedRoute>} />
-      <Route path="/customer" element={<ProtectedRoute><Customer /></ProtectedRoute>} />
-      <Route path="/product" element={<ProtectedRoute><Product /></ProtectedRoute>} />
+    
       <Route path="/shopping" element={<ProtectedRoute><Shopping /></ProtectedRoute>} />
       <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
       <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />

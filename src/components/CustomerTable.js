@@ -6,13 +6,20 @@ import { customerAPI } from "../services/apiService";
 import { ProgressSpinner } from "primereact/progressspinner";
 import "../styles/Details.css"
 
-function CustomerTable() {
+function CustomerTable({ searchTerm = "" }) {
     const { userId } = useAuth();
 
     const [Data, setData] = useState([])
     const [errorMessage, setErrorMessage] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
 
+    const filteredData = Data.filter(item => {
+        return (
+            (item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (item.address && item.address.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (item.contact_no && String(item.contact_no).includes(searchTerm))
+        );
+    });
 
     useEffect(() => {
         const fetchCustomerData = async () => {
@@ -40,29 +47,27 @@ function CustomerTable() {
     return (
 
         <div >
-            <h2 className="customer-heading">Customer&nbsp;Details</h2>
             {errorMessage && <p>{errorMessage}</p>}
             {isLoading &&
-                <div className="spinner-container">
-                    <ProgressSpinner style={{ width: '40px', height: '40px' }} strokeWidth="4" animationDuration=".5s" />
-                </div>
+                <>
+                    <div className="spinner-container">
+                        <ProgressSpinner style={{ width: '40px', height: '40px' }} strokeWidth="4" animationDuration=".5s" />
+                    </div>
+                    <h4 className="loading-text">Loading Customers Data...</h4>
+                </>
             }
 
             {Data.length > 0 && (
                 <div className="card">
-                    <DataTable value={Data} paginator rows={5} responsiveLayout="scroll" stripedRows className="customer-table" emptyMessage="No Customers found">
+                    <DataTable value={filteredData} paginator rows={5} responsiveLayout="scroll" stripedRows className="customer-table" emptyMessage="No Customers found">
                         <Column field="name" header="Name" />
                         <Column field="address" header="Address" />
                         <Column field="contact_no" header="Contact Number" />
                     </DataTable>
                 </div>
             )}
-
         </div>
-
-
     );
-
 }
 
 export default CustomerTable

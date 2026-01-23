@@ -1,8 +1,6 @@
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { Toast } from 'primereact/toast';
 import { ProgressSpinner } from 'primereact/progressspinner';
-import useMediaQuery from '@mui/material/useMediaQuery';
 import { useAuth } from '../context/AuthContext';
 import { customerAPI } from '../services/apiService';
 import Header from './Header';
@@ -16,8 +14,6 @@ function Customer() {
     const [isLoading, setIsLoading] = useState(false);
 
     const toast = useRef(null);
-    const navigate = useNavigate();
-    const isMobile = useMediaQuery('(max-width:768px)');
 
     const handleContactChange = (e) => {
         const value = e.target.value;
@@ -42,17 +38,17 @@ function Customer() {
             return;
         }
 
-        const customerData = {id:userId, name, address, contactNo };
+        const customerData = { id: userId, name, address, contactNo };
 
         setIsLoading(true);
         try {
             await customerAPI.addCustomer(customerData);
-            toast.current.show({severity: 'success',summary: 'Success',detail: 'Customer added successfully'});
+            toast.current.show({ severity: 'success', summary: 'Success', detail: 'Customer added successfully' });
             handleClear()
         } catch (error) {
             console.error('Error adding customer:', error);
             const errorMessage = error.response?.data?.message || "Contact number already exists in the table";
-            toast.current.show({severity: 'error',summary: 'Error',detail: errorMessage});
+            toast.current.show({ severity: 'error', summary: 'Error', detail: errorMessage });
         } finally {
             setIsLoading(false);
         }
@@ -68,11 +64,9 @@ function Customer() {
         <>
             <Header />
             <Toast ref={toast} />
-
             <div className="customer-container">
                 <div className="customer-card">
                     <h2 className="customer-heading">Add Customer</h2>
-
                     <div className="customer-form" >
                         <div className="form-group">
                             <label htmlFor="name" className="form-label">Name:</label>
@@ -91,7 +85,6 @@ function Customer() {
                         </div>
 
                         <div className="d-flex justify-content-between flex-wrap mt-4">
-                            {/* <button  type="button"  onClick={handleBack}  className="back-button" disabled={isLoading}>Back</button> */}
                             <button type="button" onClick={handleClear} className="btn btn-secondary mb-2" disabled={isLoading}>Clear</button>
                             {isLoading ? (
                                 <div className="spinner-container">

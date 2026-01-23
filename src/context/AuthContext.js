@@ -17,6 +17,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(!!userId);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isAppLoading, setIsAppLoading] = useState(true);
 
   // Update localStorage when userId changes
   useEffect(() => {
@@ -27,6 +28,11 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('userId');
       setIsAuthenticated(false);
     }
+    // Set app loading to false after auth check
+    const timer = setTimeout(() => {
+      setIsAppLoading(false);
+    }, 1000); // Give it some time to show splash
+    return () => clearTimeout(timer);
   }, [userId]);
 
   const login = useCallback(async (id) => {
@@ -76,6 +82,7 @@ export const AuthProvider = ({ children }) => {
     userId,
     isAuthenticated,
     loading,
+    isAppLoading,
     error,
     login,
     register,

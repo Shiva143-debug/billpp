@@ -1,5 +1,5 @@
 .invoice-container {
-  min-height: 100vh;
+  min-height: calc(100vh - 60px);
   background: linear-gradient(to top, var(--primary-bg), var(--secondary-bg));
   width: 100%;
 }
@@ -7,19 +7,18 @@
 .invoice-card {
   background: linear-gradient(to bottom, var(--card-bg), var(--secondary-bg));
   border-radius: var(--border-radius-lg);
-  /* padding: var(--spacing-xl); */
   box-shadow: 0 8px 16px var(--shadow-color);
   width: 100%;
   transition: transform var(--transition-speed) ease;
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 0.5rem;
+  padding: 0.75rem;
+  min-height: calc(100vh - 80px);
 }
 
 .invoice-heading {
   color: var(--accent-color);
-  /* margin-bottom: var(--spacing-xl); */
   font-weight: 600;
   border-bottom: 2px solid var(--accent-color);
-  /* padding-bottom: var(--spacing-sm); */
   display: inline-block;
 }
 
@@ -72,9 +71,6 @@
 
 .form-container {
   display: flex;
-  /* flex-wrap: wrap; */
-  /* gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg); */
 }
 
 .form-section {
@@ -215,6 +211,30 @@
   outline: none;
 }
 
+/* Button Styling */
+.btn {
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  border: none;
+  display: inline-block;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
 .view-button {
   background-color: var(--accent-color);
   color: var(--primary-bg);
@@ -301,11 +321,11 @@
 /* Responsive styles */
 @media (max-width: 768px) {
   .invoice-container {
-    padding: var(--spacing-sm);
+    padding: 0.25rem;
   }
   
   .invoice-card {
-    padding: var(--spacing-md);
+    padding: 0.5rem;
   }
   
   .tab-container {
@@ -326,11 +346,10 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 0.75rem 0.5rem;
+    padding: 0.5rem 0.4rem;
     min-width: 100px;
   }
   
-  /* Add visual indicator for scrollable tabs */
   .tab-wrapper::after {
     content: '';
     position: absolute;
@@ -347,14 +366,31 @@
     min-width: 100%;
   }
   
-  .search-container {
-    flex-direction: column;
-    align-items: flex-start;
+  .btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
   }
   
-  .search-label {
-    margin-bottom: var(--spacing-xs);
-    margin-right: 0;
+  .d-flex.justify-content-between.align-items-center {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch !important;
+  }
+  
+  .d-flex.justify-content-between.align-items-center .search-container {
+    width: 100%;
+    margin: 0;
+  }
+  
+  .d-flex.justify-content-between.align-items-center .btn {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .search-container {
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: 0.5rem;
   }
   
   .search-input {
@@ -366,7 +402,6 @@
     max-height: 400px;
   }
   
-  /* Force the form and table sections to stack on mobile */
   .invoice-form-container {
     flex-direction: column;
   }
@@ -376,8 +411,7 @@
     width: 100%;
   }
   
-  /* Adjust form fields for better mobile display */
   .form-field {
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.75rem;
   }
 }

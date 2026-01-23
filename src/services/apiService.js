@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const BASE_URL = 'https://backend-bill-2.onrender.com';
+// const BASE_URL = 'http://localhost:4000';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -49,10 +50,10 @@ const authAPI = {
 // Customer related API calls
 const customerAPI = {
   getCustomers: (userId) => {
-    return api.get(`/customer/${userId}`);
+    return api.get(`/get-customers/${userId}`);
   },
   addCustomer: (customerData) => {
-    return api.post(`/addCustomer/`, customerData);
+    return api.post(`/add-customer`, customerData);
   },
   // updateCustomer: (userId, customerId, customerData) => {
   //   return api.put(`/customer/${userId}/${customerId}`, customerData);
@@ -65,10 +66,10 @@ const customerAPI = {
 // Product related API calls
 const productAPI = {
   getProducts: (userId) => {
-    return api.get(`/product/${userId}`);
+    return api.get(`/get-products/${userId}`);
   },
   addProduct: (userId, productData) => {
-    return api.post(`/addproduct/${userId}`, productData);
+    return api.post(`/add-product/${userId}`, productData);
   },
   // updateProduct: (userId, productId, productData) => {
   //   return api.put(`/product/${userId}/${productId}`, productData);
@@ -77,83 +78,91 @@ const productAPI = {
   //   return api.delete(`/product/${userId}/${productId}`);
   // },
   deductProductQuantity: (userId, deductData) => {
-    return api.put(`/deductProductQuantity/${userId}`, deductData);
+    return api.put(`/deduct-product-quantity/${userId}`, deductData);
   },
   addProductQuantity: (userId, addedData) => {
-    return api.put(`/addProductQuantity/${userId}`, addedData);
+    return api.put(`/add-product-quantity/${userId}`, addedData);
   }
 };
 
 // Items/Cart related API calls
-const itemsAPI = {
+const cartAPI = {
   getItems: (userId, customerName) => {
-    return api.get(`/items/${userId}/${customerName}`);
+    return api.get(`/get-cart-items/${userId}/${customerName}`);
   },
   addItem: (userId, itemData) => {
-    return api.post(`/addItems/${userId}`, itemData);
+    return api.post(`/add-items-to-cart/${userId}`, itemData);
   },
   updateItem: (userId, itemId, itemData) => {
-    return api.put(`/updateItems/${userId}/${itemId}`, itemData);
+    return api.put(`/update-cart-items/${userId}/${itemId}`, itemData);
   },
   deleteItem: (itemId, userId) => {
-    return api.delete(`/items/${parseInt(itemId)}?user_id=${userId}`);
-  }
+    return api.delete(`/delete-cart-items/${parseInt(itemId)}?userId=${userId}`);
+  },
+
+
 };
 
 // Reports related API calls
 const reportsAPI = {
-  // getReports: (userId) => {
-  //   return api.get(`/reports/${userId}`);
-  // },
-  getReportsByDate: (date, userId) => {
-    return api.get(`/salesByDate/${date}?user_id=${userId}`);
+  getRecentReports: (userId) => {
+    return api.get(`/recent-sales?userId=${userId}`);
   },
+
+  getReportsByDate: (date, userId) => {
+    return api.get(`/reports-by-date/${date}?userId=${userId}`);
+  },
+
   getReportsByName: (name, userId) => {
-    return api.get(`/salesByName/${name}?user_id=${userId}`);
+    return api.get(`/reports-by-user/${name}?userId=${userId}`);
   },
   getReportsByProductName: (productName, userId) => {
-    return api.get(`/salesByProductName/${productName}?user_id=${userId}`);
+    return api.get(`/reports-by-product/${productName}?userId=${userId}`);
   },
   getReportsByPaymentType: (paymentType, userId) => {
-    return api.get(`/reportBypayment/${paymentType}?user_id=${userId}`);
+    return api.get(`/reports-by-payment-type/${paymentType}?userId=${userId}`);
   },
   getCashReportByDate: (date, userId) => {
-    return api.get(`/cashReport/${date}?user_id=${userId}`);
+    return api.get(`/get-cash-report/${date}?userId=${userId}`);
   }
 };
 
 // Invoice related API calls
 const invoiceAPI = {
-  getInvoice: (userId, invoiceId) => {
-    return api.get(`/invoice/${userId}/${invoiceId}`);
+
+  getInvoiceProducts: (userId) => {
+    return api.get(`/get-invoice-products/${userId}`);
   },
-  createInvoice: (invoiceData) => {
-    return api.post('/invoice', invoiceData);
-  },
-  addInvoice: (userId, invoiceData) => {
-    return api.post(`/addInvoice/${userId}`, invoiceData);
+
+  addInvoice: (userId, data) => {
+    return api.post(`/add-company-invoice/${userId}`, data, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
   },
   getInvoices: (userId) => {
-    return api.get(`/getInvoice/${userId}`);
+    return api.get(`/get-company-invoices/${userId}`);
   },
-  getProductsFromCompanies: (userId) => {
-    return api.get(`/getProductsFromCompanies/${userId}`);
-  }
+
+
 };
 
 // Checkout related API calls
 const checkoutAPI = {
   exportToSales: (userId, itemsArray) => {
-    return api.post(`/exportToSales/${userId}`, { itemsArray });
+    return api.post(`/add-item-in-reports/${userId}`, { itemsArray });
   },
+
   deleteItems: (customerName, userId) => {
-    return api.delete(`/deleteItems/${customerName}/${userId}`);
+    return api.delete(`/delete-all-items-in-cart-after-check-out/${customerName}/${userId}`);
   },
+
   processPayment: (userId, paymentData) => {
     return api.post(`/payment/${userId}`, paymentData);
   },
   processCashPayment: (userId, cashData) => {
-    return api.post(`/cashCompleted/${userId}`, cashData);
+    return api.post(`/cash-pay/${userId}`, cashData);
   }
 };
 
@@ -164,7 +173,7 @@ export {
   authAPI,
   customerAPI,
   productAPI,
-  itemsAPI,
+  cartAPI,
   reportsAPI,
   invoiceAPI,
   checkoutAPI

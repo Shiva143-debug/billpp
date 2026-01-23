@@ -2,6 +2,14 @@
   text-align: center;
 }
 
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;
