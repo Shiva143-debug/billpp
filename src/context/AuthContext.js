@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
         const response = await productAPI.getProducts(userId);
         console.log('Initial products loaded:', response?.data);
         if (isMounted && response?.data) {
-          setIsAppLoading(false); // ✅ ONLY after data comes
+          setIsAppLoading(false); // ✅ ONLY after data comes successfully
         }
       } catch (error) {
         console.error('Failed to load products', error);

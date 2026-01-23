@@ -64,7 +64,7 @@ const customerAPI = {
 };
 
 // Product related API calls
-const productAPI = {
+const productAPI = { 
   getProducts: (userId) => {
     return api.get(`/get-products/${userId}`);
   },
