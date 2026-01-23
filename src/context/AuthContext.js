@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { authAPI } from '../services/apiService';
+import { authAPI, productAPI } from '../services/apiService';
 
 // Create the context
 const AuthContext = createContext();
@@ -29,11 +29,36 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
     }
     // Set app loading to false after auth check
-    const timer = setTimeout(() => {
-      setIsAppLoading(false);
-    }, 1000); // Give it some time to show splash
-    return () => clearTimeout(timer);
+    // const timer = setTimeout(() => {
+    //   setIsAppLoading(false);
+    // }, 1000); // Give it some time to show splash
+    // return () => clearTimeout(timer);
   }, [userId]);
+
+  useEffect(() => {
+
+    let isMounted = true;
+
+    const loadInitialData = async () => {
+      setIsAppLoading(true);
+      try {
+        const response = await productAPI.getProducts(userId);
+        if (isMounted && response?.data) {
+          setIsAppLoading(false); // ✅ ONLY after data comes
+        }
+      } catch (error) {
+        console.error('Failed to load products', error);
+        if (isMounted) setIsAppLoading(false); // optional: stop splash even on error
+      }
+    };
+
+    loadInitialData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
+
 
   const login = useCallback(async (id) => {
     setUserId(id);
