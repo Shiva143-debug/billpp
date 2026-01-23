@@ -2,7 +2,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useRef, useState } from 'react';
 import { Toast } from 'primereact/toast';
 import { ConfirmPopup, confirmPopup } from 'primereact/confirmpopup';
-import { TbReportSearch } from "react-icons/tb";
+import { TbHome, TbReportSearch } from "react-icons/tb";
 import { FaFileInvoice } from "react-icons/fa";
 import { BiSolidDetail } from "react-icons/bi";
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -86,7 +86,7 @@ const Header = () => {
             {isMobile && (
                 <div className="nav-menu-mobile">
                     <ul className="nav-menu-list-mobile">
-                        <li><Link to="/home" onClick={() => setActiveButton("home")} className={activeButton === "home" ? "active-nav" : ""}><img src="https://assets.ccbp.in/frontend/react-js/nxt-trendz-home-icon.png" alt="nav home" className="nav-bar-img" /></Link></li>
+                        <li><Link to="/home" onClick={() => setActiveButton("home")} className={activeButton === "home" ? "active-nav" : ""}><TbHome className="nav-icon" /></Link></li>
                         <li><Link to="/reports" onClick={() => setActiveButton("reports")} className={activeButton === "reports" ? "active-nav" : ""}><TbReportSearch className="nav-icon" /></Link></li>
                         <li><Link to="/invoice" onClick={() => setActiveButton("invoice")} className={activeButton === "invoice" ? "active-nav" : ""}><FaFileInvoice className="nav-icon" /></Link></li>
                         <li><Link to="/details" onClick={() => setActiveButton("details")} className={activeButton === "details" ? "active-nav" : ""}><BiSolidDetail className="nav-icon" /></Link></li>
