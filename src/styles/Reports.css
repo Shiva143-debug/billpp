@@ -226,9 +226,8 @@
 
 /* Responsive styles */
 @media (max-width: 768px) {
-  
-  .reports-card {
-    /* padding: var(--spacing-md); */
+  .reports-container {
+    padding: 0.25rem;
   }
   
   .tab-container {
