@@ -143,7 +143,7 @@ const Invoice = () => {
 
     const viewPDF = (url) => {
         if (url) {
-            window.open(`${'https://backend-bill-2.onrender.com'}${url}`, '_blank');
+            window.open(`${'https://backend-bill-1.onrender.com'}${url}`, '_blank');
         }
     };
 
