@@ -43,6 +43,12 @@ function Home() {
     const handleSelectChange = (event) => {
         const selectedValue = event.target.value;
         setSelectedOption(selectedValue);
+        if (selectedValue === "") {
+            setShowProductCart(false);
+            setAddress("");
+            setContactNo("");
+            return;
+        }
         const selectedData = customers.find(d => d.name === selectedValue);
         setAddress(selectedData ? selectedData.address : "");
         setContactNo(selectedData ? selectedData.contact_no : "");
@@ -77,7 +83,12 @@ function Home() {
         try {
             await cartAPI.deleteItem(itemId, userId);
             toast.current.show({ severity: 'success', summary: 'Success', detail: "Item Removed From Cart successfully" });
-            setItems((prevItems) => prevItems.filter((item) => item.item_id !== itemId));
+            setItems((prevItems) => {
+                const newItems = prevItems.filter((item) => item.item_id !== itemId);
+                const newTotal = newItems.reduce((acc, item) => acc + (Number(item.total_amount) || 0), 0);
+                setGrandTotal(newTotal);
+                return newItems;
+            });
         } catch (error) {
             console.error('Error during item deletion:', error);
             toast.current.show({ severity: 'error', summary: 'Error', detail: "Failed to delete item" });
@@ -184,7 +195,7 @@ function Home() {
                 if (response.data && response.data.length > 0) {
                     let total = 0;
                     response.data.forEach((d) => {
-                        total += d.total_amount;
+                        total += Number(d.total_amount) || 0;
                     });
                     setItems(response.data);
                     setGrandTotal(total);
@@ -198,6 +209,9 @@ function Home() {
             } finally {
                 setIsLoading(false);
             }
+        } else {
+            setItems([]);
+            setGrandTotal(0);
         }
     };
 
@@ -272,7 +286,7 @@ function Home() {
                                                 <td>{sale.product_name}</td>
                                                 <td>{sale.name}</td>
                                                 <td>{sale.quantity}</td>
-                                                <td>₹{parseFloat(sale.total_amount).toFixed(2)}</td>
+                                                <td>₹{parseInt(sale.total_amount).toFixed(0)}</td>
                                             </tr>
                                         ))}
                                     </tbody>

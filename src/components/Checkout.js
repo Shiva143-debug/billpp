@@ -213,7 +213,7 @@ const Checkout = () => {
         setInputs(newInputs);
     };
 
-    const remainingBalance = grandTotal - inputs.reduce((acc, curr) => acc + calculateAmount(curr.denomination, curr.value), 0);
+    const remainingBalance = parseInt(grandTotal - inputs.reduce((acc, curr) => acc + calculateAmount(curr.denomination, curr.value), 0));
 
     return (
         <div className="checkout-container">
@@ -239,11 +239,11 @@ const Checkout = () => {
 
                     <div className="invoice-header">
                         <div className="company-logo">
-                            <img src="https://res.cloudinary.com/dxgbxchqm/image/upload/v1704974380/comapnylogo_gh2jvq.jpg" alt="Company Logo" />
+                            {/* <img src="https://res.cloudinary.com/dxgbxchqm/image/upload/v1704974380/comapnylogo_gh2jvq.jpg" alt="Company Logo" /> */}
                             <div>
-                                {!isMobile && <h2 className="company-name">BillApp</h2>}
-                                {isMobile && <h6 className="company-name">BillApp</h6>}
-                                <p> pragathinagar</p>
+                                {!isMobile && <h2 className="company-name">BillPro</h2>}
+                                {isMobile && <h6 className="company-name">BillPro</h6>}
+                                {/* <p> pragathinagar</p> */}
                             </div>
                         </div>
                         {!showPayButton && (
@@ -295,6 +295,7 @@ const Checkout = () => {
             {upishow && (
                 <Card className="checkout-card qr-container">
                     <h2 className="checkout-heading">Scan QR Code to Pay</h2>
+                    <h3 className="checkout-heading">Amount: {parseInt(grandTotal)}</h3>
                     <QRCode value={"shiva"} size={isMobile ? 300 : 400} className="qr-code" />
                     <div className="action-buttons">
                         <Button label="Back" icon="pi pi-arrow-left" className="p-button-info" onClick={onBack} disabled={isLoading} />
@@ -306,7 +307,7 @@ const Checkout = () => {
             {cashshow && (
                 <Card className="checkout-card">
                     <h2 className="checkout-heading">Cash Payment</h2>
-                    <h3>Total Amount to Pay: {grandTotal}</h3>
+                    <h3>Total Amount to Pay: {parseInt(grandTotal)}</h3>
 
                     <DataTable value={inputs} className="denomination-table" responsiveLayout="scroll" stripedRows>
                         <Column field="denomination" header="Denomination" />
