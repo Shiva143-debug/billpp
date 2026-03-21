@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://backend-bill-2.onrender.com';
+// const BASE_URL = 'https://backend-bill-2.onrender.com';
+const BASE_URL = 'https://backend-bill-1.onrender.com';
 // const BASE_URL = 'http://localhost:4000';
 
 // Create axios instance with default config
