@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { authAPI, productAPI } from '../services/apiService';
+import { authAPI } from '../services/apiService';
 
 // Create the context
 const AuthContext = createContext();
@@ -9,61 +9,44 @@ export const useAuth = () => {
   return useContext(AuthContext);
 };
 
+const getStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem('user')) || null;
+  } catch {
+    return null;
+  }
+};
+
 // Provider component
 export const AuthProvider = ({ children }) => {
-  const [userId, setUserId] = useState(() => {
-    return localStorage.getItem('userId') || null;
-  });
-  const [isAuthenticated, setIsAuthenticated] = useState(!!userId);
+  const [token, setToken] = useState(() => localStorage.getItem('token') || null);
+  const [user, setUser] = useState(getStoredUser);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isAppLoading, setIsAppLoading] = useState(true);
 
-  // Update localStorage when userId changes
+  // Brief splash so the app feels polished on load
   useEffect(() => {
-    if (userId) {
-      localStorage.setItem('userId', userId);
-      setIsAuthenticated(true);
-    } else {
-      localStorage.removeItem('userId');
-      setIsAuthenticated(false);
+    const timer = setTimeout(() => {
+      setIsAppLoading(false);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Login - stores the JWT token and user info returned by the backend
+  const login = useCallback(async (loginResponse) => {
+    if (!loginResponse?.token) {
+      return { success: false, message: 'Invalid login response' };
     }
-    // Set app loading to false after auth check
-    // const timer = setTimeout(() => {
-    //   setIsAppLoading(false);
-    // }, 1000); // Give it some time to show splash
-    // return () => clearTimeout(timer);
-  }, [userId]);
-
-  useEffect(() => {
-
-    let isMounted = true;
-
-    const loadInitialData = async () => {
-      setIsAppLoading(true);
-      try {
-        const response = await productAPI.getProducts(userId);
-        console.log('Initial products loaded:', response?.data);
-        if (isMounted && response?.data) {
-          setIsAppLoading(false); // ✅ ONLY after data comes successfully
-        }
-      } catch (error) {
-        console.error('Failed to load products', error);
-        if (isMounted) setIsAppLoading(false); // optional: stop splash even on error
-      }
-    };
-
-    loadInitialData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [userId]);
-
-
-  const login = useCallback(async (id) => {
-    setUserId(id);
-
+    setToken(loginResponse.token);
+    setUser(loginResponse.user || null);
+    localStorage.setItem('token', loginResponse.token);
+    if (loginResponse.user) {
+      localStorage.setItem('user', JSON.stringify(loginResponse.user));
+    } else {
+      localStorage.removeItem('user');
+    }
+    return { success: true, message: 'Login successful' };
   }, []);
 
   // Register function
@@ -83,9 +66,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Logout function
-  const logout = () => {
-    setUserId(null);
-  };
+  const logout = useCallback(() => {
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  }, []);
 
   // Update password function
   const updatePassword = async (userData) => {
@@ -105,8 +91,10 @@ export const AuthProvider = ({ children }) => {
 
   // Context value
   const value = {
-    userId,
-    isAuthenticated,
+    token,
+    user,
+    userId: user?.id || null,
+    isAuthenticated: !!token,
     loading,
     isAppLoading,
     error,

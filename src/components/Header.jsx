@@ -65,8 +65,13 @@ const Header = () => {
             <div className="nav-content">
                 <Link to="/home" className="logo-link">
                     <div className="logo-container">
-                        <FaFileInvoice className="logo-icon" />
-                        <h3 className="app-title">BillApp Pro</h3>
+                        <div className="logo-badge">
+                            <FaFileInvoice className="logo-icon" />
+                        </div>
+                        <div className="logo-text">
+                            <span className="logo-brand">Bill</span>
+                            <span className="logo-accent">Pro</span>
+                        </div>
                     </div>
                 </Link>
                 {!isMobile && (

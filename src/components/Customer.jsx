@@ -1,13 +1,11 @@
 import { useState, useRef } from "react";
 import { Toast } from 'primereact/toast';
 import { ProgressSpinner } from 'primereact/progressspinner';
-import { useAuth } from '../context/AuthContext';
 import { customerAPI } from '../services/apiService';
 import Header from './Header';
 import "../styles/Customer.css";
 
 function Customer() {
-    const { userId } = useAuth();
     const [name, setName] = useState("");
     const [address, setAddress] = useState("");
     const [contactNo, setContactNo] = useState("");
@@ -38,7 +36,7 @@ function Customer() {
             return;
         }
 
-        const customerData = { id: userId, name, address, contactNo };
+        const customerData = { name, address, contactNo };
 
         setIsLoading(true);
         try {

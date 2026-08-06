@@ -9,11 +9,9 @@ import { Button } from 'primereact/button';
 import { InputNumber } from 'primereact/inputnumber';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { productAPI, checkoutAPI } from '../services/apiService';
-import { useAuth } from '../context/AuthContext';
 import '../styles/Checkout.css';
 
 const Checkout = () => {
-    const { userId } = useAuth();
     const [checkshow, setcheckoutshow] = useState(true);
     const [upishow, setupishow] = useState(false);
     const [cashshow, setcashshow] = useState(false);
@@ -77,8 +75,6 @@ const Checkout = () => {
         setGrandTotal(total);
     }, [inputs]);
 
-    console.log(orderDetails)
-
     if (!orderDetails || orderDetails.grandTotal === 0) {
         return <div style={{ textAlign: "center", fontSize: "50px" }}>No order details found</div>;
     }
@@ -88,22 +84,52 @@ const Checkout = () => {
     const formatDisplayDate = (dateString) => {
         if (!dateString) return '';
         const d = new Date(dateString);
+        if (isNaN(d.getTime())) return String(dateString);
         const day = String(d.getDate()).padStart(2, '0');
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const year = String(d.getFullYear()).slice(-2);
         return `${day}/${month}/${year}`;
     };
 
+    const getFileNameDate = (dateString) => {
+        if (!dateString) return '';
+        const d = new Date(dateString);
+        if (isNaN(d.getTime())) return String(dateString);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${year}-${month}-${day}`;
+    };
+
+    const formatCurrency = (value) => {
+        const num = Number(String(value ?? 0).replace(/[^0-9.-]/g, ''));
+        return `₹${(isNaN(num) ? 0 : num).toLocaleString('en-IN')}`;
+    };
 
     const handlePrint = async () => {
         setIsLoading(true);
 
         try {
+            const previousTitle = document.title;
+            const safeCustomer = (selectedOption || 'customer')
+                .replace(/[^a-zA-Z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '') || 'customer';
+            const printTitle = `${safeCustomer}-${getFileNameDate(date)}-Invoice`;
+
+            document.title = printTitle;
+            window.addEventListener('afterprint', () => {
+                document.title = previousTitle;
+            }, { once: true });
             window.print();
+            setTimeout(() => {
+                if (document.title === printTitle) {
+                    document.title = previousTitle;
+                }
+            }, 10000);
 
             const exportData = items.map(item => ({ selectedOption, date, productName: item.product_name, price: item.price, quantity: item.quantity, total_amount: item.total_amount, }));
             const itemsArray = exportData
-            const response = await checkoutAPI.exportToSales(userId, itemsArray);
+            const response = await checkoutAPI.exportToSales(itemsArray);
             console.log(response.data.message);
 
             await resetDataAndGrandTotal();
@@ -117,7 +143,7 @@ const Checkout = () => {
 
     const resetDataAndGrandTotal = async () => {
         try {
-            await checkoutAPI.deleteItems(selectedOption, userId);
+            await checkoutAPI.deleteItems(selectedOption);
             console.log('Items deleted successfully');
         } catch (error) {
             console.error('Failed to delete items:', error);
@@ -129,7 +155,7 @@ const Checkout = () => {
         orderDetails.items.forEach((item) => {
             const adddedValues = { productName: item.product_name, quantity: item.quantity };
             try {
-                productAPI.addProductQuantity(userId, adddedValues);
+                productAPI.addProductQuantity(adddedValues);
                 navigate("/home");
             } catch (err) {
                 console.log(err)
@@ -159,7 +185,7 @@ const Checkout = () => {
 
         try {
             const paymentData = { selectedOption, date, paymentType: "upi_pay", grandTotal };
-            const response = await checkoutAPI.processPayment(userId, paymentData);
+            const response = await checkoutAPI.processPayment(paymentData);
             console.log(response.data.message);
             setupishow(false);
             setcheckoutshow(true);
@@ -177,7 +203,7 @@ const Checkout = () => {
 
         try {
             const cashData = {
-                userId, selectedOption, date, grandTotal,
+                selectedOption, date, grandTotal,
                 denominations: {
                     '2000notes': inputs.find(input => input.denomination === '2000 Notes').value || 0,
                     '500notes': inputs.find(input => input.denomination === '500 Notes').value || 0,
@@ -192,10 +218,10 @@ const Checkout = () => {
                 }
             };
 
-            await checkoutAPI.processCashPayment(userId, cashData);
+            await checkoutAPI.processCashPayment(cashData);
 
-            const paymentData = { userId, selectedOption, date, paymentType: "cash_pay", grandTotal };
-            await checkoutAPI.processPayment(userId, paymentData);
+            const paymentData = { selectedOption, date, paymentType: "cash_pay", grandTotal };
+            await checkoutAPI.processPayment(paymentData);
 
             setupishow(false);
             setcheckoutshow(true);
@@ -218,8 +244,6 @@ const Checkout = () => {
     return (
         <div className="checkout-container">
 
-            {/* <Header className="no-print" /> */}
-
             {isLoading && (
                 <div className="spinner-container">
                     <ProgressSpinner style={{ width: '50px', height: '50px' }} strokeWidth="4" />
@@ -227,64 +251,61 @@ const Checkout = () => {
             )}
             {checkshow && (
                 <Card className="checkout-card">
-                    <style>
-                        {`
-                            @media print {
-                                .no-print {
-                                    display: none !important;
-                                }
-                            }
-                        `}
-                    </style>
-
                     <div className="invoice-header">
-                        <div className="company-logo">
-                            {/* <img src="https://res.cloudinary.com/dxgbxchqm/image/upload/v1704974380/comapnylogo_gh2jvq.jpg" alt="Company Logo" /> */}
-                            <div>
+                        <div className="invoice-brand">
+                            <div className="brand-badge">BP</div>
+                            <div className="brand-meta">
                                 {!isMobile && <h2 className="company-name">BillPro</h2>}
                                 {isMobile && <h6 className="company-name">BillPro</h6>}
-                                {/* <p> pragathinagar</p> */}
+                                <p className="brand-tagline">Official Sales Receipt</p>
                             </div>
                         </div>
+                        <div className="d-flex flex-column ">
+                            <span className="meta-label">Invoice No: {uniqueId}</span>
+                            <span className="meta-label">Date :{formatDisplayDate(date)}</span>
+                        </div>
+
                         {!showPayButton && (
-                            <Button label="Export / Print" icon="pi pi-print" className="p-button-success no-print" onClick={handlePrint} />
+                            <Button label="Export / Print" icon="pi pi-print" className="export-btn no-print" onClick={handlePrint} />
                         )}
                     </div>
 
-                    <h2 className="checkout-heading">INVOICE #{uniqueId}</h2>
+               
 
-                    <div className="invoice-details">
-                        <div className="customer-details">
-                            <p><strong>Name:</strong> {selectedOption}</p>
-                            <p><strong>Address:</strong> {address}</p>
-                            <p><strong>Contact No:</strong> {contactNo}</p>
-                        </div>
-                        <div className="invoice-date">
-                            <p><strong>Date:</strong> {formatDisplayDate(date)}</p>
-                        </div>
+                    <div className="customer-panel">
+                        <span className="panel-label">Customer Details</span>
+                        <span className="customer-name">{selectedOption} {address}</span>
+                        <span className="customer-line">{contactNo}</span>
                     </div>
 
-                    <DataTable value={items} className="invoice-table" responsiveLayout="scroll" stripedRows >
+                    <DataTable value={items} className="reports-table" responsiveLayout="scroll" stripedRows>
                         <Column field="product_name" header="Product Name" />
                         <Column field="price" header="Price" />
-                        <Column field="quantity" header="Quantity" />
-                        <Column field="total_amount" header="Total Amount" />
+                        <Column field="quantity" header="Qty" />
+                        <Column field="total_amount" header="Total" />
                     </DataTable>
 
-                    <div className="grand-total">
-                        <strong>Grand Total:</strong> {grandTotal}
+                    <div className="total-box">
+                        <div className="total-line">
+                            <span className="total-label">Number of Items: {items.length}</span>
+                            {/* <span className="total-value">{items.length}</span> */}
+                        </div>
+                        <div className="total-line total-main">
+                            <span className="total-label">Grand Total</span>
+                            <span className="total-value">{formatCurrency(grandTotal)}</span>
+                        </div>
                     </div>
 
                     {showPayButton && (
                         <div className="payment-options no-print">
-                            <Button label="Back" icon="pi pi-arrow-left" className="p-button-info" onClick={onBack} disabled={isLoading} />
+                            <Button label="Back" icon="pi pi-arrow-left" className="back-btn" onClick={onBack} disabled={isLoading} />
 
                             {!isplayclick ? (
-                                <Button label="Pay" icon="pi pi-credit-card" className="p-button-primary" onClick={onPay} disabled={isLoading} />
+                                <Button label="Proceed to Pay" icon="pi pi-credit-card" className="pay-btn" onClick={onPay} disabled={isLoading} />
                             ) : (
                                 <div className="payment-methods">
-                                    <Button label="Pay Cash" icon="pi pi-money-bill" className="p-button-info" onClick={oncash} disabled={isLoading} />
-                                    <Button label="UPI Pay" icon="pi pi-mobile" className="p-button-info" onClick={onUpi} disabled={isLoading} style={{ marginLeft: '1rem' }} />
+                                    <Button label="Cash" icon="pi pi-money-bill" className="cash-btn" onClick={oncash} disabled={isLoading} />
+                                    <Button label="UPI" icon="pi pi-mobile" className="upi-btn" onClick={onUpi} disabled={isLoading} />
                                 </div>
                             )}
                         </div>
@@ -294,47 +315,54 @@ const Checkout = () => {
 
             {upishow && (
                 <Card className="checkout-card qr-container">
-                    <h2 className="checkout-heading">Scan QR Code to Pay</h2>
-                    <h3 className="checkout-heading">Amount: {parseInt(grandTotal)}</h3>
-                    <QRCode value={"shiva"} size={isMobile ? 300 : 400} className="qr-code" />
-                    <div className="action-buttons">
-                        <Button label="Back" icon="pi pi-arrow-left" className="p-button-info" onClick={onBack} disabled={isLoading} />
-                        <Button label="UPI Pay" icon="pi pi-check" className="p-button-success" onClick={paymentCompleted} disabled={isLoading} />
+                    <div className="screen-header">
+                        <h2 className="screen-title">Scan QR Code to Pay</h2>
+                        <div className="amount-due">{formatCurrency(parseInt(grandTotal))}</div>
+                    </div>
+                    <div className="qr-frame">
+                        <QRCode value={"shiva"} size={isMobile ? 220 : 280} className="qr-code" />
+                    </div>
+                    <div className="action-buttons no-print">
+                        <Button label="Back" icon="pi pi-arrow-left" className="back-btn" onClick={onBack} disabled={isLoading} />
+                        <Button label="Done" icon="pi pi-check" className="pay-btn" onClick={paymentCompleted} disabled={isLoading} />
                     </div>
                 </Card>
             )}
 
             {cashshow && (
                 <Card className="checkout-card">
-                    <h2 className="checkout-heading">Cash Payment</h2>
-                    <h3>Total Amount to Pay: {parseInt(grandTotal)}</h3>
+                    <div className="screen-header">
+                        <h2 className="screen-title">Cash Payment</h2>
+                        <div className="amount-due">{formatCurrency(parseInt(grandTotal))}</div>
+                    </div>
 
                     <DataTable value={inputs} className="denomination-table" responsiveLayout="scroll" stripedRows>
                         <Column field="denomination" header="Denomination" />
-                        <Column header="Input" body={(rowData, rowIndex) => (
+                        <Column header="Count" body={(rowData, rowIndex) => (
                             <InputNumber value={rowData.value} onValueChange={(e) => handleInputChange(rowIndex.rowIndex, e.value)} className="denomination-input" />
                         )} />
-                        <Column header="Amount" body={(rowData) => calculateAmount(rowData.denomination, rowData.value)} />
+                        <Column header="Amount" body={(rowData) => formatCurrency(calculateAmount(rowData.denomination, rowData.value))} />
                     </DataTable>
 
-                    <div className="grand-total">
-                        <strong>Grand Total:</strong> {TotalAmount}
-                    </div>
-
-                    <div className="remaining-balance">
-                        <p>
-                            <strong>Remaining Balance to Pay:</strong> {remainingBalance >= 0 ? remainingBalance : 0}
-                        </p>
+                    <div className="cash-summary">
+                        <div className="total-line">
+                            <span className="total-label">Cash Received</span>
+                            <span className="total-value">{formatCurrency(TotalAmount)}</span>
+                        </div>
+                        <div className="total-line">
+                            <span className="total-label">Remaining Balance</span>
+                            <span className="total-value">{formatCurrency(remainingBalance >= 0 ? remainingBalance : 0)}</span>
+                        </div>
                         {remainingBalance < 0 && (
                             <p className="balance-warning">Amount paid exceeds the total amount.</p>
                         )}
                     </div>
 
-                    <div className="action-buttons">
-                        <Button label="Back" icon="pi pi-arrow-left" className="p-button-info" onClick={onBack} disabled={isLoading} />
+                    <div className="action-buttons no-print">
+                        <Button label="Back" icon="pi pi-arrow-left" className="back-btn" onClick={onBack} disabled={isLoading} />
 
                         {remainingBalance === 0 && (
-                            <Button label="Cash Payment" icon="pi pi-check" className="p-button-success" onClick={cashpaymentCompleted} disabled={isLoading} />
+                            <Button label="Complete Cash Payment" icon="pi pi-check" className="pay-btn" onClick={cashpaymentCompleted} disabled={isLoading} />
                         )}
                     </div>
                 </Card>

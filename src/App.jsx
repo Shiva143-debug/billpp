@@ -44,7 +44,7 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={!isAuthenticated ? <Login setUserId={login}/> : <Navigate to="/home" replace />} />
+      <Route path="/" element={!isAuthenticated ? <Login onLogin={login}/> : <Navigate to="/home" replace />} />
       <Route path="/home" element={<ProtectedRoute><Home /> </ProtectedRoute>} />
     
       <Route path="/shopping" element={<ProtectedRoute><Shopping /></ProtectedRoute>} />

@@ -1,7 +1,11 @@
 .details-container {
-  height: 100vh - 60px;
+  height: calc(100vh - 60px);
   background: linear-gradient(to top, var(--primary-bg), var(--secondary-bg));
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .details-card {
@@ -10,7 +14,22 @@
   padding: 0.75rem;
   box-shadow: 0 4px 8px var(--shadow-color);
   width: 100%;
-  transition: transform var(--transition-speed) ease;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.details-card .p-card-body,
+.details-card .p-card-content {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .details-heading {
@@ -59,8 +78,34 @@
 }
 
 .content-container {
-  min-height: 400px;
+  flex: 1;
+  min-height: 0;
   padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.content-container .card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin: 0;
+}
+
+.content-container .p-datatable {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-container .p-datatable .p-datatable-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
 .details-header {
@@ -182,4 +227,80 @@
   background-color: var(--card-bg);
   font-weight: 600;
   color: var(--accent-color);
+}
+
+/* Action buttons for edit/delete */
+.table-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px var(--shadow-color);
+}
+
+.action-edit {
+  background-color: rgba(187, 134, 252, 0.15);
+  color: var(--accent-color);
+}
+
+.action-edit:hover {
+  background-color: rgba(187, 134, 252, 0.3);
+}
+
+.action-delete {
+  background-color: rgba(207, 102, 121, 0.15);
+  color: var(--error-color);
+}
+
+.action-delete:hover {
+  background-color: rgba(207, 102, 121, 0.3);
+}
+
+/* Empty state */
+.table-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding: 4rem 1rem;
+  color: var(--text-secondary);
+  background-color: var(--card-bg);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--border-radius-md);
+  text-align: center;
+}
+
+.table-empty-state i {
+  font-size: 2.5rem;
+  color: var(--accent-color);
+  opacity: 0.6;
+}
+
+.table-empty-state p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Table container polish */
+.table-responsive {
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
 }

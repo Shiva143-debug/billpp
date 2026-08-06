@@ -11,16 +11,14 @@ import { Card } from 'primereact/card';
 import { Dialog } from 'primereact/dialog';
 import { FileUpload } from 'primereact/fileupload';
 import { ProgressSpinner } from 'primereact/progressspinner';
-import "@react-pdf-viewer/core/lib/styles/index.css";
-import "@react-pdf-viewer/default-layout/lib/styles/index.css";
-import { invoiceAPI, BASE_URL } from '../services/apiService';
-import { useAuth } from '../context/AuthContext';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import { MdEdit, MdDelete } from 'react-icons/md';
+import { invoiceAPI, BASE_URL, productAPI } from '../services/apiService';
 import Header from "./Header";
 import AddProductModal from "./AddProductModal";
 import "../styles/Invoice.css";
 
 const Invoice = () => {
-    const { userId } = useAuth();
     const [activeTabIndex, setActiveTabIndex] = useState(0);
     const [companyName, setCompanyName] = useState("");
     const [amount, setAmount] = useState("");
@@ -33,6 +31,7 @@ const Invoice = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [showAddProductModal, setShowAddProductModal] = useState(false);
+    const [editingProduct, setEditingProduct] = useState(null);
 
     const toast = useRef(null);
     const fileUploadRef = useRef(null);
@@ -45,12 +44,12 @@ const Invoice = () => {
     useEffect(() => {
         fetchInvoices();
         fetchProductsFromCompanies();
-    }, [userId]);
+    }, []);
 
     const fetchInvoices = async () => {
         try {
             setIsLoading(true);
-            const response = await invoiceAPI.getInvoices(userId);
+            const response = await invoiceAPI.getInvoices();
             const data = response.data;
             setInvoices(data);
         } catch (error) {
@@ -66,7 +65,7 @@ const Invoice = () => {
     const fetchProductsFromCompanies = async () => {
         try {
             setIsLoading(true);
-            const response = await invoiceAPI.getInvoiceProducts(userId);
+            const response = await invoiceAPI.getInvoiceProducts();
             const data = response.data;
             setProductsData(data);
         } catch (error) {
@@ -109,7 +108,7 @@ const Invoice = () => {
 
         try {
             setIsLoading(true)
-            await invoiceAPI.addInvoice(userId, formData);
+            await invoiceAPI.addInvoice(formData);
             toast.current.show({ severity: 'success', summary: 'Success', detail: 'Invoice added successfully' });
             resetForm();
             setShowModal(false);
@@ -143,7 +142,7 @@ const Invoice = () => {
 
     const viewPDF = (url) => {
         if (url) {
-            window.open(`${'https://backend-bill-1.onrender.com'}${url}`, '_blank');
+            window.open(`${BASE_URL}${url}`, '_blank');
         }
     };
 
@@ -153,7 +152,45 @@ const Invoice = () => {
 
     const handleProductAdded = () => {
         setShowAddProductModal(false);
+        setEditingProduct(null);
         fetchProductsFromCompanies();
+    };
+
+    const handleEditProduct = (rowData) => {
+        setEditingProduct(rowData);
+        setShowAddProductModal(true);
+    };
+
+    const handleDelete = (rowData) => {
+        confirmDialog({
+            message: `Are you sure you want to delete product "${rowData.product_name}"?`,
+            header: 'Confirm Deletion',
+            icon: 'pi pi-exclamation-triangle',
+            acceptClassName: 'p-button-danger',
+            accept: async () => {
+                try {
+                    await productAPI.deleteProduct(rowData.id);
+                    toast.current.show({ severity: 'success', summary: 'Success', detail: 'Product deleted successfully' });
+                    fetchProductsFromCompanies();
+                } catch (error) {
+                    console.error('Error deleting product:', error);
+                    toast.current.show({ severity: 'error', summary: 'Error', detail: 'Failed to delete product' });
+                }
+            }
+        });
+    };
+
+    const actionsTemplate = (rowData) => {
+        return (
+            <div className="table-actions">
+                <button type="button" className="action-btn action-edit" title="Edit Product" onClick={() => handleEditProduct(rowData)}>
+                    <MdEdit />
+                </button>
+                <button type="button" className="action-btn action-delete" title="Delete Product" onClick={() => handleDelete(rowData)}>
+                    <MdDelete />
+                </button>
+            </div>
+        );
     };
 
     const formatDisplayDate = (dateString) => {
@@ -182,7 +219,7 @@ const Invoice = () => {
         return formatDisplayDate(rowData.date);
     };
 
-    const viewPdfTemplate = (rowData) => {
+    const ActionTemplate = (rowData) => {
         return (
             <Button label="View PDF" icon="pi pi-file-pdf" className="p-button-sm p-button-info" onClick={() => viewPDF(rowData.file_path)} />
         );
@@ -235,11 +272,11 @@ const Invoice = () => {
                                 <h4 className="loading-text">Loading Invoice Data...</h4>
                             </>
                         ) : (
-                            <DataTable value={filteredInvoices} className="invoice-table" paginator rows={5} responsiveLayout="scroll" stripedRows emptyMessage="No invoices found">
+                            <DataTable value={filteredInvoices} className="reports-table" paginator rows={5} responsiveLayout="scroll" stripedRows emptyMessage="No invoices found">
                                 <Column field="invoice" header="Invoice Number" />
                                 <Column field="company_name" header="Company Name" />
                                 <Column field="amount" header="Amount" />
-                                <Column header="View" body={viewPdfTemplate} />
+                                <Column header="Actions" body={ActionTemplate} />
                             </DataTable>
                         )}
                     </div>
@@ -305,7 +342,7 @@ const Invoice = () => {
                     </div>
                 ) : (
                     <>
-                        <DataTable value={filteredData} className="invoice-table" responsiveLayout="scroll" rows={5} paginator stripedRows emptyMessage="No records found">
+                        <DataTable value={filteredData} className="reports-table" responsiveLayout="scroll" rows={5} paginator stripedRows emptyMessage="No records found">
                             <Column field="invoice_number" header="Invoice Number" />
                             <Column field="company_name" header="Company Name" />
                             <Column field="product_name" header="Product Name" />
@@ -314,6 +351,7 @@ const Invoice = () => {
                             <Column field="quantity" header="Quantity" />
                             {/* <Column field="total_amount" header="Total Amount" /> */}
                             <Column field="date" header="Purchased Date" body={dateTemplate} />
+                            <Column header="Actions" body={actionsTemplate} style={{ width: '120px', textAlign: 'center' }} />
                         </DataTable>
 
                         <div className="summary-container">
@@ -334,15 +372,18 @@ const Invoice = () => {
         <div>
             <Header />
             <Toast ref={toast} />
+            <ConfirmDialog />
             <div className="invoice-container">
                 <Card className="invoice-card">
                     <div className="tab-wrapper">
                         <TabMenu model={tabItems} activeIndex={activeTabIndex} onTabChange={handleTabChange} className="tab-container" />
                     </div>
-                    {activeTabIndex === 0 ? companyInvoice() : productInvoice()}
+                    <div className="invoice-content">
+                        {activeTabIndex === 0 ? companyInvoice() : productInvoice()}
+                    </div>
                 </Card>
             </div>
-            <AddProductModal visible={showAddProductModal} onHide={() => setShowAddProductModal(false)} onProductAdded={handleProductAdded} />
+            <AddProductModal visible={showAddProductModal} onHide={() => setShowAddProductModal(false)} onProductAdded={handleProductAdded} editMode={!!editingProduct} productData={editingProduct}  />
         </div>
     );
 };

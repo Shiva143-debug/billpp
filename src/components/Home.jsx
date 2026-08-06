@@ -7,7 +7,6 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { MdDelete } from "react-icons/md";
 import { GrUpdate } from "react-icons/gr";
 import { AiOutlinePlus } from "react-icons/ai";
-import { useAuth } from '../context/AuthContext';
 import { customerAPI, cartAPI, productAPI, reportsAPI } from '../services/apiService';
 import Header from './Header';
 import Shopping from './Shopping';
@@ -15,7 +14,6 @@ import AddCustomerModal from './AddCustomerModal';
 import "../styles/Home.css";
 
 function Home() {
-    const { userId } = useAuth();
     const [customers, setCustomers] = useState([]);
     const [selectedOption, setSelectedOption] = useState("");
     const [address, setAddress] = useState("");
@@ -32,7 +30,6 @@ function Home() {
     const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
     const toast = useRef(null);
 
-    console.log("userId", userId)
     const navigate = useNavigate();
     const isMobile = useMediaQuery('(max-width:768px)');
 
@@ -81,7 +78,7 @@ function Home() {
     const handleDelete = async (itemId) => {
         setIsLoading(true);
         try {
-            await cartAPI.deleteItem(itemId, userId);
+            await cartAPI.deleteItem(itemId);
             toast.current.show({ severity: 'success', summary: 'Success', detail: "Item Removed From Cart successfully" });
             setItems((prevItems) => {
                 const newItems = prevItems.filter((item) => item.item_id !== itemId);
@@ -112,7 +109,7 @@ function Home() {
             for (const item of orderDetails.items) {
                 try {
                     const deductValues = { productName: item.product_name, quantity: item.quantity };
-                    const response = await productAPI.deductProductQuantity(userId, deductValues);
+                    const response = await productAPI.deductProductQuantity(deductValues);
                     if (response.data.message && response.data.message.includes("greater than what the store has in stock")) {
                         toast.current.show({ severity: 'warn', summary: 'Warning', detail: response.data.message });
                         allItemsProcessed = false;
@@ -137,7 +134,7 @@ function Home() {
     // Fetch customers
     const fetchCustomers = async () => {
         try {
-            const response = await customerAPI.getCustomers(userId);
+            const response = await customerAPI.getCustomers();
             if (Array.isArray(response.data)) {
                 setCustomers(response.data);
             } else {
@@ -150,10 +147,8 @@ function Home() {
     };
 
     useEffect(() => {
-        if (userId) {
-            fetchCustomers();
-        }
-    }, [userId]);
+        fetchCustomers();
+    }, []);
 
     // Fetch recent sales for today
     useEffect(() => {
@@ -161,7 +156,7 @@ function Home() {
             try {
                 setIsLoading(true);
                 const today = new Date().toISOString().split('T')[0];
-                const response = await reportsAPI.getRecentReports(userId);
+                const response = await reportsAPI.getRecentReports();
                 if (Array.isArray(response.data)) {
                     setRecentSales(response.data);
                 } else {
@@ -177,21 +172,21 @@ function Home() {
             }
         };
 
-        if (userId && !selectedOption) {
+        if (!selectedOption) {
             fetchRecentSales();
         }
-    }, [userId, selectedOption]);
+    }, [selectedOption]);
 
     // Fetch items when customer is selected
     useEffect(() => {
         fetchItems();
-    }, [selectedOption, userId])
+    }, [selectedOption])
 
     const fetchItems = async () => {
         if (selectedOption !== "") {
             setIsLoading(true);
             try {
-                const response = await cartAPI.getItems(userId, selectedOption);
+                const response = await cartAPI.getItems(selectedOption);
                 if (response.data && response.data.length > 0) {
                     let total = 0;
                     response.data.forEach((d) => {
@@ -295,6 +290,13 @@ function Home() {
                         </div>
                     )}
 
+                    {!isLoading && !selectedOption && recentSales.length === 0 && (
+                        <div className="empty-state">
+                            <i className="pi pi-shopping-cart" />
+                            <p className="empty-message">No data found yet. Add a customer and start building your order.</p>
+                        </div>
+                    )}
+
                     {showProductCart && (
                         <div className="addButtons">
                             <button type="button" onClick={productButtonClick} className="add-button">Add Product To Cart +</button>
@@ -304,11 +306,13 @@ function Home() {
 
 
                     {!isLoading && showProductCart && (
-                        <div className="d-flex flex-column">
+                        <div className="d-flex flex-column cart-section">
                             <div className="mobile-table">
                                 <h4 style={{ color: 'var(--text-primary)', marginBottom: '1rem' }}>Cart Items</h4>
                                 {items.length === 0 && (
-                                    <p className="error-message">No items in your cart</p>
+                                    <div className="empty-cart">
+                                        <p className="error-message">No items in your cart</p>
+                                    </div>
                                 )}
                                 {items.length > 0 && (
                                     <>
@@ -365,12 +369,12 @@ function Home() {
             </div>
 
             <Dialog visible={visible} style={{ width: isMobile ? '100vw' : "80vw" }} onHide={() => setVisible(false)}>
-                <Shopping id={userId} name={selectedOption} date={date} onHide={onHide} itemsAddedToCart={itemsAddedToCart} />
+                <Shopping name={selectedOption} date={date} onHide={onHide} itemsAddedToCart={itemsAddedToCart} />
             </Dialog>
 
             <Dialog visible={visibleEdit} style={{ width: isMobile ? '100vw' : "80vw" }} onHide={() => setVisibleEdit(false)} >
                 {selectedRowData && (
-                    <Shopping id={userId} name={selectedOption} date={date} onHide={onHide} itemsAddedToCart={itemsAddedToCart} editMode={true} itemData={selectedRowData} />
+                    <Shopping name={selectedOption} date={date} onHide={onHide} itemsAddedToCart={itemsAddedToCart} editMode={true} itemData={selectedRowData} />
                 )}
             </Dialog>
             <AddCustomerModal visible={showAddCustomerModal} onHide={() => setShowAddCustomerModal(false)} onCustomerAdded={handleCustomerAdded} />

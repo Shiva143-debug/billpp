@@ -8,13 +8,11 @@ import { Dropdown } from 'primereact/dropdown';
 import { Calendar } from 'primereact/calendar';
 import { Card } from 'primereact/card';
 import { ProgressSpinner } from 'primereact/progressspinner';
-import { useAuth } from '../context/AuthContext';
 import Header from "./Header";
 import { customerAPI, productAPI, reportsAPI } from "../services/apiService";
 import "../styles/Reports.css";
 
 const Reports = () => {
-    const { userId } = useAuth();
     const [activeTabIndex, setActiveTabIndex] = useState(0);
     const [reportType, setReportType] = useState("Date");
     const [selectedOption, setSelectedOption] = useState(null);
@@ -32,7 +30,7 @@ const Reports = () => {
     const [grandTotal, setGrandTotal] = useState(0);
 
     const tabItems = [
-        { label: 'By Date', icon: 'pi pi-calendar' },
+        { label: 'By Purchase Date', icon: 'pi pi-calendar' },
         { label: 'By Customer', icon: 'pi pi-user' },
         { label: 'By Product', icon: 'pi pi-shopping-bag' },
         { label: 'By Payment Type', icon: 'pi pi-credit-card' },
@@ -47,7 +45,7 @@ const Reports = () => {
     useEffect(() => {
         const fetchCustomers = async () => {
             try {
-                const response = await customerAPI.getCustomers(userId);
+                const response = await customerAPI.getCustomers();
                 const data = response.data;
 
                 if (Array.isArray(data)) {
@@ -65,15 +63,13 @@ const Reports = () => {
             }
         };
 
-        if (userId) {
-            fetchCustomers();
-        }
-    }, [userId]);
+        fetchCustomers();
+    }, []);
 
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const response = await productAPI.getProducts(userId);
+                const response = await productAPI.getProducts();
                 const data = response.data;
 
                 if (Array.isArray(data)) {
@@ -91,17 +87,15 @@ const Reports = () => {
             }
         };
 
-        if (userId) {
-            fetchProducts();
-        }
-    }, [userId]);
+        fetchProducts();
+    }, []);
 
     // Fetch recent purchases on initial load
     useEffect(() => {
         const fetchRecentPurchases = async () => {
             setIsLoading(true);
             try {
-                const response = await reportsAPI.getRecentReports(userId);
+                const response = await reportsAPI.getRecentReports();
                 if (Array.isArray(response.data)) {
                     setRecentPurchases(response.data);
                     calculateGrandTotal(response.data);
@@ -116,10 +110,10 @@ const Reports = () => {
             }
         };
 
-        if (userId && activeTabIndex === 0 && !date) {
+        if (activeTabIndex === 0 && !date) {
             fetchRecentPurchases();
         }
-    }, [userId, activeTabIndex]);
+    }, [activeTabIndex]);
 
     useEffect(() => {
         const fetchReportData = async () => {
@@ -132,7 +126,7 @@ const Reports = () => {
                     case 'Date':
                         if (date) {
                             const formattedDate = formatDate(date);
-                            response = await reportsAPI.getReportsByDate(formattedDate, userId)
+                            response = await reportsAPI.getReportsByDate(formattedDate)
                             const data = response.data
                             setReportData(data);
                             calculateGrandTotal(data);
@@ -141,7 +135,7 @@ const Reports = () => {
 
                     case 'Customer':
                         if (selectedOption) {
-                            response = await reportsAPI.getReportsByName(selectedOption, userId)
+                            response = await reportsAPI.getReportsByName(selectedOption)
                             const data = response.data
                             setReportData(data);
                             calculateGrandTotal(data);
@@ -150,7 +144,7 @@ const Reports = () => {
 
                     case 'Product':
                         if (selectedOption) {
-                            response = await reportsAPI.getReportsByProductName(selectedOption, userId)
+                            response = await reportsAPI.getReportsByProductName(selectedOption)
                             const data = response.data
                             setReportData(data);
                             calculateGrandTotal(data);
@@ -159,7 +153,7 @@ const Reports = () => {
 
                     case 'Payment':
                         if (paymentType) {
-                            response = await reportsAPI.getReportsByPaymentType(paymentType, userId)
+                            response = await reportsAPI.getReportsByPaymentType(paymentType)
                             const data = response.data
                             setReportData(data);
                             calculateGrandTotal(data);
@@ -170,7 +164,7 @@ const Reports = () => {
                     case 'Cash':
                         if (cashDate) {
                             const formattedDate = formatDate(cashDate);
-                            response = await reportsAPI.getCashReportByDate(formattedDate, userId)
+                            response = await reportsAPI.getCashReportByDate(formattedDate)
                             const data = response.data
                             setCashReportData(data);
                             // calculateGrandTotal(data);
@@ -190,7 +184,7 @@ const Reports = () => {
         if (date || selectedOption || paymentType || cashDate) {
             fetchReportData();
         }
-    }, [reportType, date, selectedOption, paymentType, cashDate, userId]);
+    }, [reportType, date, selectedOption, paymentType, cashDate]);
 
     const formatDate = (date) => {
         if (!date) return '';
@@ -270,6 +264,13 @@ const Reports = () => {
         return formatDisplayDate(rowData.date);
     };
 
+    const renderEmptyState = (message) => (
+        <div className="empty-state">
+            <i className="pi pi-inbox" />
+            <p className="empty-message">{message}</p>
+        </div>
+    );
+
     const renderReportContent = () => {
         if (isLoading) {
             return (
@@ -308,6 +309,7 @@ const Reports = () => {
                         {renderRecentPurchasesTable()}
                     </>
                 )}
+                {!date && recentPurchases.length === 0 && renderEmptyState("No data found yet. Your recent purchases will appear here.")}
                 {date && renderReportTable()}
             </>
         );
@@ -325,6 +327,7 @@ const Reports = () => {
                         {renderRecentPurchasesTable()}
                     </>
                 )}
+                {!selectedOption && recentPurchases.length === 0 && renderEmptyState("No data found yet. Reports by customer will appear here.")}
                 {selectedOption && renderReportTable()}
             </>
         );
@@ -342,6 +345,7 @@ const Reports = () => {
                         {renderRecentPurchasesTable()}
                     </>
                 )}
+                {!selectedOption && recentPurchases.length === 0 && renderEmptyState("No data found yet. Reports by product will appear here.")}
                 {selectedOption && renderReportTable()}
             </>
         );
@@ -359,6 +363,7 @@ const Reports = () => {
                         {renderRecentPurchasesTable()}
                     </>
                 )}
+                {!paymentType && recentPurchases.length === 0 && renderEmptyState("No data found yet. Payment type reports will appear here.")}
                 {paymentType && renderReportTable()}
             </>
         );
@@ -380,8 +385,13 @@ const Reports = () => {
                     </>
                 )}
 
+                {!cashDate && recentPurchases.length === 0 && renderEmptyState("No data found yet. Cash reports will appear here.")}
+
                 {cashDate && (
                     <div className="table-container">
+                        {cashReportData.length === 0 ? (
+                            renderEmptyState("No cash records found for the selected date.")
+                        ) : (
                         <DataTable paginator rows={5} value={cashReportData} className="reports-table" responsiveLayout="scroll" stripedRows emptyMessage="No cash records found"
                             footer={
                                 <div className="summary-container">
@@ -407,6 +417,7 @@ const Reports = () => {
                             <Column field="onerupees" header="1" />
                             <Column field="grand_total" header="Total" />
                         </DataTable>
+                        )}
                     </div>
                 )}
             </>
@@ -437,6 +448,13 @@ const Reports = () => {
         const filteredData = filterData(reportData, searchTerm);
         const tableTotal = filteredData.reduce((acc, item) => acc + (parseFloat(item.total_amount || item.amount || 0) || 0), 0);
 
+        // if (filteredData.length === 0) {
+        //     return (
+        //         <div className="table-container">
+        //             {renderEmptyState(reportData.length === 0 ? "No records found for the selected filter." : "No records match your search.")}
+        //         </div>
+        //     );
+        // }
         return (
             <>
                 <div className="search-container">
@@ -465,7 +483,9 @@ const Reports = () => {
                     <div className="tab-wrapper">
                         <TabMenu model={tabItems} activeIndex={activeTabIndex} onTabChange={handleTabChange} className="tab-container" />
                     </div>
-                    {renderReportContent()}
+                    <div className="reports-content">
+                        {renderReportContent()}
+                    </div>
                 </Card>
             </div>
         </div>

@@ -1,19 +1,29 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog } from 'primereact/dialog';
 import { Toast } from 'primereact/toast';
 import { ProgressSpinner } from 'primereact/progressspinner';
-import { useAuth } from '../context/AuthContext';
 import { customerAPI } from '../services/apiService';
 import "../styles/Customer.css";
 
-function AddCustomerModal({ visible, onHide, onCustomerAdded }) {
-    const { userId } = useAuth();
+function AddCustomerModal({ visible, onHide, onCustomerAdded, editMode = false, customerData = null }) {
     const [name, setName] = useState("");
     const [address, setAddress] = useState("");
     const [contactNo, setContactNo] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
     const toast = useRef(null);
+
+    useEffect(() => {
+        if (visible) {
+            if (editMode && customerData) {
+                setName(customerData.name || "");
+                setAddress(customerData.address || "");
+                setContactNo(customerData.contact_no || "");
+            } else {
+                handleClear();
+            }
+        }
+    }, [visible, editMode, customerData]);
 
     const handleContactChange = (e) => {
         const value = e.target.value;
@@ -38,16 +48,21 @@ function AddCustomerModal({ visible, onHide, onCustomerAdded }) {
             return;
         }
 
-        const customerData = { id: userId, name, address, contactNo };
+        const customerDataPayload = { name, address, contactNo };
 
         setIsLoading(true);
         try {
-            await customerAPI.addCustomer(customerData);
-            toast.current.show({ severity: 'success', summary: 'Success', detail: 'Customer added successfully' });
+            if (editMode && customerData) {
+                await customerAPI.updateCustomer(customerData.customer_id, customerDataPayload);
+                toast.current.show({ severity: 'success', summary: 'Success', detail: 'Customer updated successfully' });
+            } else {
+                await customerAPI.addCustomer(customerDataPayload);
+                toast.current.show({ severity: 'success', summary: 'Success', detail: 'Customer added successfully' });
+            }
             handleClear();
             onCustomerAdded();
         } catch (error) {
-            console.error('Error adding customer:', error);
+            console.error('Error saving customer:', error);
             const errorMessage = error.response?.data?.message || "Contact number already exists in the table";
             toast.current.show({ severity: 'error', summary: 'Error', detail: errorMessage });
         } finally {
@@ -69,7 +84,7 @@ function AddCustomerModal({ visible, onHide, onCustomerAdded }) {
     return (
         <>
             <Toast ref={toast} />
-            <Dialog visible={visible} onHide={handleDialogHide} header="Add New Customer" modal
+            <Dialog visible={visible} onHide={handleDialogHide} header={editMode ? "Update Customer" : "Add New Customer"} modal
                 style={{ width: '90vw', maxWidth: '600px' }} className="modal-dialog" appendTo={document.body}>
                 <div className="customer-form">
                     <div className="form-group">
@@ -93,7 +108,9 @@ function AddCustomerModal({ visible, onHide, onCustomerAdded }) {
                                 <ProgressSpinner style={{ width: '40px', height: '40px' }} strokeWidth="4" animationDuration=".5s" />
                             </div>
                         ) : (
-                            <button className="btn btn-primary mb-2" onClick={handleSubmit}>Add Customer</button>
+                            <button className="btn btn-primary mb-2" onClick={handleSubmit}>
+                                {editMode ? 'Update Customer' : 'Add Customer'}
+                            </button>
                         )}
                     </div>
                 </div>

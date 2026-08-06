@@ -2,12 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { Toast } from 'primereact/toast';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { useAuth } from '../context/AuthContext';
 import { productAPI, cartAPI } from '../services/apiService';
 import "../styles/Shopping.css";
 
 function Shopping({ name, date, onHide, itemsAddedToCart, editMode = false, itemData = null }) {
-    const { userId } = useAuth();
     const [products, setProducts] = useState([]);
     const [selectedProduct, setSelectedProduct] = useState("select");
     const [price, setPrice] = useState("");
@@ -32,7 +30,7 @@ function Shopping({ name, date, onHide, itemsAddedToCart, editMode = false, item
         const fetchProducts = async () => {
             setIsLoading(true);
             try {
-                const response = await productAPI.getProducts(userId);
+                const response = await productAPI.getProducts();
                 if (Array.isArray(response.data)) {
                     setProducts(response.data);
                 } else {
@@ -46,10 +44,8 @@ function Shopping({ name, date, onHide, itemsAddedToCart, editMode = false, item
             }
         };
 
-        if (userId) {
-            fetchProducts();
-        }
-    }, [userId]);
+        fetchProducts();
+    }, []);
 
     const handleProductChange = (e) => {
         const selectedValue = e.target.value;
@@ -86,13 +82,13 @@ function Shopping({ name, date, onHide, itemsAddedToCart, editMode = false, item
         setIsLoading(true);
 
         try {
-            const itemDataValues = { userId, name, date, productName: selectedProduct, price, quantity: parseInt(quantity), totalAmount: price * quantity };
+            const itemDataValues = { name, date, productName: selectedProduct, price, quantity: parseInt(quantity), totalAmount: price * quantity };
 
             if (editMode && itemData) {
-                await cartAPI.updateItem(userId, itemData.item_id, itemDataValues);
+                await cartAPI.updateItem(itemData.item_id, itemDataValues);
                 toast.current.show({ severity: 'success', summary: 'Success', detail: 'Item updated successfully' });
             } else {
-                await cartAPI.addItem(userId, itemDataValues);
+                await cartAPI.addItem(itemDataValues);
                 toast.current.show({ severity: 'success', summary: 'Success', detail: 'Item added to cart successfully' });
             }
 

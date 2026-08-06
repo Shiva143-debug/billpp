@@ -6,7 +6,7 @@ import { authAPI } from '../services/apiService';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import "../styles/Login.css";
 
-function Login({ setUserId }) {
+function Login({ onLogin }) {
     const toast = useRef(null);
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('login');
@@ -38,6 +38,10 @@ function Login({ setUserId }) {
         }
         else if (!mobileNo) {
             toast.current.show({ severity: 'warn', summary: 'Warning', detail: 'Please enter mobile number' });
+            return;
+        }
+        else if (!/^\d{10}$/.test(mobileNo)) {
+            toast.current.show({ severity: 'warn', summary: 'Warning', detail: 'Mobile number must be exactly 10 digits' });
             return;
         }
         const userData = { FullName: fullName, email, mobileNo };
@@ -81,13 +85,13 @@ function Login({ setUserId }) {
             const { data, status } = await authAPI.login(credentials);
 
             if (status === 200) {
+                await onLogin(data);
                 toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Successful' });
-                setUserId(data.result.user_id);
                 setLoginMobileNo("");
                 setPassword("");
                 setTimeout(() => {
                     navigate("/home");
-                }, 3000);
+                }, 1500);
             } else {
                 toast.current.show({ severity: 'error', summary: 'Error', detail: 'Invalid Credentials' });
             }
@@ -184,7 +188,7 @@ function Login({ setUserId }) {
 
                             <div className="form-group">
                                 <label htmlFor="mobileNo">Mobile Number:</label>
-                                <input id="mobileNo" type="number" placeholder="Enter your mobile number" value={mobileNo} onChange={(e) => setMobileNumber(e.target.value)} className="form-control" disabled={loading} />
+                                <input id="mobileNo" type="text" inputMode="numeric" maxLength={10} placeholder="Enter your mobile number" value={mobileNo} onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))} className="form-control" disabled={loading} />
                             </div>
 
                             <div className="button-container">
@@ -203,7 +207,7 @@ function Login({ setUserId }) {
                         <div id="login">
                             <div className="form-group">
                                 <label htmlFor="loginmobileNo">Mobile Number:</label>
-                                <input id="loginmobileNo" type="text" placeholder="Enter your mobile Number" value={loginmobileNo} onChange={(e) => setLoginMobileNo(e.target.value)} className="form-control" disabled={loading} />
+                                <input id="loginmobileNo" type="text" placeholder="Enter your mobile Number" value={loginmobileNo} maxLength={10}  onChange={(e) => setLoginMobileNo(e.target.value)} className="form-control" disabled={loading} />
                             </div>
 
                             <div className="form-group">

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { TabMenu } from 'primereact/tabmenu';
 import { Card } from 'primereact/card';
 import { InputText } from 'primereact/inputtext';
@@ -13,6 +13,8 @@ const Details = () => {
     const [activeTabIndex, setActiveTabIndex] = useState(0);
     const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
     const [showAddProductModal, setShowAddProductModal] = useState(false);
+    const [editingCustomer, setEditingCustomer] = useState(null);
+    const [editingProduct, setEditingProduct] = useState(null);
     const [customerSearch, setCustomerSearch] = useState("");
     const [productSearch, setProductSearch] = useState("");
     const [refreshKey, setRefreshKey] = useState(0);
@@ -28,12 +30,34 @@ const Details = () => {
 
     const handleCustomerAdded = () => {
         setShowAddCustomerModal(false);
+        setEditingCustomer(null);
         setRefreshKey(prev => prev + 1);
     };
 
     const handleProductAdded = () => {
         setShowAddProductModal(false);
+        setEditingProduct(null);
         setRefreshKey(prev => prev + 1);
+    };
+
+    const handleEditCustomer = (rowData) => {
+        setEditingCustomer(rowData);
+        setShowAddCustomerModal(true);
+    };
+
+    const handleEditProduct = (rowData) => {
+        setEditingProduct(rowData);
+        setShowAddProductModal(true);
+    };
+
+    const handleAddCustomerModalHide = () => {
+        setShowAddCustomerModal(false);
+        setEditingCustomer(null);
+    };
+
+    const handleAddProductModalHide = () => {
+        setShowAddProductModal(false);
+        setEditingProduct(null);
     };
 
     return (
@@ -62,15 +86,15 @@ const Details = () => {
 
                     <div className="content-container" key={refreshKey}>
                         {activeTabIndex === 0 ? (
-                            <CustomerTable searchTerm={customerSearch} />
+                            <CustomerTable searchTerm={customerSearch} onEditCustomer={handleEditCustomer} />
                         ) : (
-                            <ProductTable searchTerm={productSearch} />
+                            <ProductTable searchTerm={productSearch} onEditProduct={handleEditProduct} />
                         )}
                     </div>
                 </Card>
             </div>
-            <AddCustomerModal visible={showAddCustomerModal} onHide={() => setShowAddCustomerModal(false)} onCustomerAdded={handleCustomerAdded} />
-            <AddProductModal visible={showAddProductModal} onHide={() => setShowAddProductModal(false)} onProductAdded={handleProductAdded} />
+            <AddCustomerModal visible={showAddCustomerModal} onHide={handleAddCustomerModalHide} onCustomerAdded={handleCustomerAdded} editMode={!!editingCustomer} customerData={editingCustomer} />
+            <AddProductModal visible={showAddProductModal} onHide={handleAddProductModalHide} onProductAdded={handleProductAdded} editMode={!!editingProduct} productData={editingProduct} />
         </div>
     );
 };
