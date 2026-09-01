@@ -9,6 +9,7 @@ function AddCustomerModal({ visible, onHide, onCustomerAdded, editMode = false, 
     const [name, setName] = useState("");
     const [address, setAddress] = useState("");
     const [contactNo, setContactNo] = useState("");
+    const [active, setActive] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
 
     const toast = useRef(null);
@@ -18,7 +19,8 @@ function AddCustomerModal({ visible, onHide, onCustomerAdded, editMode = false, 
             if (editMode && customerData) {
                 setName(customerData.name || "");
                 setAddress(customerData.address || "");
-                setContactNo(customerData.contact_no || "");
+                setContactNo(customerData.contactNo || "");
+                setActive(customerData.active === true || customerData.active === 1 || customerData.active === 'true');
             } else {
                 handleClear();
             }
@@ -48,19 +50,24 @@ function AddCustomerModal({ visible, onHide, onCustomerAdded, editMode = false, 
             return;
         }
 
-        const customerDataPayload = { name, address, contactNo };
+        const customerDataPayload = editMode && customerData ? { name, address, contactNo, active } : { name, address, contactNo };
 
         setIsLoading(true);
         try {
+            let response;
             if (editMode && customerData) {
-                await customerAPI.updateCustomer(customerData.customer_id, customerDataPayload);
-                toast.current.show({ severity: 'success', summary: 'Success', detail: 'Customer updated successfully' });
+                response = await customerAPI.updateCustomer(customerData.customerId, customerDataPayload);
             } else {
-                await customerAPI.addCustomer(customerDataPayload);
-                toast.current.show({ severity: 'success', summary: 'Success', detail: 'Customer added successfully' });
+                response = await customerAPI.addCustomer(customerDataPayload);
             }
-            handleClear();
-            onCustomerAdded();
+
+            if (response.success) {
+                toast.current.show({ severity: 'success', summary: 'Success', detail: response.message });
+                handleClear();
+                onCustomerAdded();
+            } else {
+                toast.current.show({ severity: 'error', summary: 'Error', detail: response.message || "Failed to save customer" });
+            }
         } catch (error) {
             console.error('Error saving customer:', error);
             const errorMessage = error.response?.data?.message || "Contact number already exists in the table";
@@ -74,6 +81,7 @@ function AddCustomerModal({ visible, onHide, onCustomerAdded, editMode = false, 
         setName("");
         setAddress("");
         setContactNo("");
+        setActive(true);
     };
 
     const handleDialogHide = () => {
@@ -99,6 +107,22 @@ function AddCustomerModal({ visible, onHide, onCustomerAdded, editMode = false, 
                         <label htmlFor="contactNo" className="form-label">Contact No:</label>
                         <input id="contactNo" type="text" placeholder="Enter contact number" className="form-control" value={contactNo} onChange={handleContactChange} maxLength={10} />
                     </div>
+                    {editMode && (
+                        <div className="form-group">
+                            <label htmlFor="active" className="form-label">Status:</label>
+                            <div className="d-flex align-items-center" style={{ paddingTop: '8px' }}>
+                                <div className="form-check form-switch" style={{ paddingLeft: '2.5em', margin: 0 }}>
+                                    <input id="active" className="form-check-input" type="checkbox" role="switch"
+                                        checked={active === true || active === 1 || active === 'true'}
+                                        onChange={(e) => setActive(e.target.checked)}
+                                        style={{ width: '2.5em', height: '1.25em' }} />
+                                </div>
+                                <span className="ms-2 form-text" style={{ fontSize: '1rem', color: (active === true || active === 1 || active === 'true') ? 'var(--success-color)' : 'var(--error-color)', fontWeight: 600 }}>
+                                    {active ? 'Active' : 'Inactive'}
+                                </span>
+                            </div>
+                        </div>
+                    )}
                     <div className="d-flex justify-content-between flex-wrap mt-4">
                         <button type="button" onClick={handleClear} className="btn btn-secondary mb-2" disabled={isLoading}>
                             Clear

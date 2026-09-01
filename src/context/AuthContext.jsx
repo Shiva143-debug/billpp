@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { authAPI } from '../services/apiService';
 
 // Create the context
@@ -54,15 +54,14 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     setError(null);
 
-    try {
-      const response = await authAPI.register(userData);
-      return { success: true, message: 'User Account Created successfully' };
-    } catch (err) {
-      setError(err.response?.data?.message || 'Email already exists. Please use a different email address.');
-      return { success: false, message: err.response?.data?.message || 'Email already exists. Please use a different email address.' };
-    } finally {
+    const response = await authAPI.register(userData);
+    if (response.success) {
       setLoading(false);
+      return { success: true, message: response.message || 'User Account Created successfully' };
     }
+    setError(response.message || 'Email already exists. Please use a different email address.');
+    setLoading(false);
+    return { success: false, message: response.message || 'Email already exists. Please use a different email address.' };
   };
 
   // Logout function
@@ -78,15 +77,14 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     setError(null);
 
-    try {
-      const response = await authAPI.updatePassword(userData);
-      return { success: true, message: 'Password updated successfully' };
-    } catch (err) {
-      setError(err.response?.data?.message || 'Please Enter Valid Email');
-      return { success: false, message: err.response?.data?.message || 'Please Enter Valid Email' };
-    } finally {
+    const response = await authAPI.updatePassword(userData);
+    if (response.success) {
       setLoading(false);
+      return { success: true, message: response.message || 'Password updated successfully' };
     }
+    setError(response.message || 'Please Enter Valid Email');
+    setLoading(false);
+    return { success: false, message: response.message || 'Please Enter Valid Email' };
   };
 
   // Context value

@@ -3,9 +3,9 @@ import { productAPI } from "../services/apiService";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
-import { MdEdit, MdDelete } from "react-icons/md";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { MdDelete, MdEdit } from "react-icons/md";
 import "../styles/Details.css"
 
 
@@ -16,8 +16,8 @@ const ProductTable = ({ searchTerm = "", onEditProduct }) => {
 
     const filteredData = Data.filter(item => {
         return (
-            (item.product_name && item.product_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (item.selling_price && String(item.selling_price).includes(searchTerm)) ||
+            (item.productName && item.productName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (item.sellingPrice && String(item.sellingPrice).includes(searchTerm)) ||
             (item.quantity && String(item.quantity).includes(searchTerm))
         );
     });
@@ -25,8 +25,8 @@ const ProductTable = ({ searchTerm = "", onEditProduct }) => {
     const fetchProductData = async () => {
         setIsLoading(true);
         try {
-            const response = await productAPI.getProducts();
-            if (Array.isArray(response.data)) {
+            const response = await productAPI.getAllProducts();
+            if (response.success && Array.isArray(response.data)) {
                 setData(response.data);
             } else {
                 setData([]);
@@ -45,15 +45,19 @@ const ProductTable = ({ searchTerm = "", onEditProduct }) => {
 
     const handleDelete = (rowData) => {
         confirmDialog({
-            message: `Are you sure you want to delete product "${rowData.product_name}"?`,
+            message: `Are you sure you want to delete product "${rowData.productName}"?`,
             header: 'Confirm Deletion',
             icon: 'pi pi-exclamation-triangle',
             acceptClassName: 'p-button-danger',
             accept: async () => {
                 try {
-                    await productAPI.deleteProduct(rowData.product_id);
-                    toast.current.show({ severity: 'success', summary: 'Success', detail: 'Product deleted successfully' });
-                    fetchProductData();
+                    const response = await productAPI.deleteProduct(rowData.id);
+                    if (response.success) {
+                        toast.current.show({ severity: 'success', summary: 'Success', detail: response.message });
+                        fetchProductData();
+                    } else {
+                        toast.current.show({ severity: 'error', summary: 'Error', detail: response.message });
+                    }
                 } catch (error) {
                     console.error('Error deleting product:', error);
                     toast.current.show({ severity: 'error', summary: 'Error', detail: 'Failed to delete product' });
@@ -62,15 +66,27 @@ const ProductTable = ({ searchTerm = "", onEditProduct }) => {
         });
     };
 
+    const statusTemplate = (rowData) => {
+        const isActive = rowData.active === true || rowData.active === 1 || rowData.active === 'true';
+        return (
+            <span className={`customer-status ${isActive ? 'customer-status-active' : 'customer-status-inactive'}`}>
+                {isActive ? 'Active' : 'Inactive'}
+            </span>
+        );
+    };
+
     const actionsTemplate = (rowData) => {
+        const isActive = rowData.active === true || rowData.active === 1 || rowData.active === 'true';
         return (
             <div className="table-actions">
                 <button type="button" className="action-btn action-edit" title="Edit Product" onClick={() => onEditProduct(rowData)}>
                     <MdEdit />
                 </button>
-                <button type="button" className="action-btn action-delete" title="Delete Product" onClick={() => handleDelete(rowData)}>
-                    <MdDelete />
-                </button>
+                {isActive && (
+                    <button type="button" className="action-btn action-delete" title="Delete Product" onClick={() => handleDelete(rowData)}>
+                        <MdDelete />
+                    </button>
+                )}
             </div>
         );
     };
@@ -91,10 +107,15 @@ const ProductTable = ({ searchTerm = "", onEditProduct }) => {
             {!isLoading && Data.length > 0 && (
                 <div className="card">
                     <DataTable value={filteredData} paginator rows={5} responsiveLayout="scroll" stripedRows className="customer-table" emptyMessage="No Products found">
-                        <Column field="product_name" header="Product Name" />
-                        <Column field="selling_price" header="Selling Price" />
-                        <Column field="quantity" header="Quantity" />
-                        {/* <Column header="Actions" body={actionsTemplate} style={{ width: '120px', textAlign: 'center' }} /> */}
+                        <Column field="invoice" header="Invoice Number" />
+                        <Column field="companyName" header="company Name" />
+                        <Column field="productName" header="Product Name" />
+                        <Column field="price" header="Price" />
+                        <Column field="sellingPrice" header="Selling Price" />
+                        <Column field="baseQuantity" header="Actual Quantity" />
+                        <Column field="quantity" header="Current Quantity" />
+                        <Column header="Status" body={statusTemplate} />
+                        <Column header="Actions" body={actionsTemplate} style={{ width: '120px', textAlign: 'left' }} />
                     </DataTable>
                 </div>
             )}

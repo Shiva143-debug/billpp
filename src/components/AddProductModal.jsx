@@ -11,8 +11,9 @@ function AddProductModal({ visible, onHide, onProductAdded, editMode = false, pr
     const [product, setProduct] = useState("");
     const [price, setPrice] = useState("");
     const [sellingPrice, setSellingPrice] = useState("");
-    const [quantity, setQuantity] = useState("");
+    const [baseQuantity, setBaseQuantity] = useState("");
     const [receivedDate, setReceivedDate] = useState(null);
+    const [active, setActive] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
 
     const toast = useRef(null);
@@ -20,13 +21,14 @@ function AddProductModal({ visible, onHide, onProductAdded, editMode = false, pr
     useEffect(() => {
         if (visible) {
             if (editMode && productData) {
-                setInvoice(productData.invoice_number || productData.invoice || productData.invoiceNumber || "");
-                setCompany(productData.company_name || productData.company || "");
-                setProduct(productData.product_name || productData.product || "");
+                setInvoice(productData.invoiceNumber || productData.invoice || "");
+                setCompany(productData.company || productData.companyName || "");
+                setProduct(productData.productName || productData.product || "");
                 setPrice(productData.price ?? "");
-                setSellingPrice(productData.selling_price ?? productData.sellingPrice ?? "");
-                setQuantity(productData.quantity ?? "");
-                setReceivedDate(formatInputDate(productData.received_date || productData.date || ""));
+                setSellingPrice(productData.sellingPrice ?? "");
+                setBaseQuantity(productData.baseQuantity ?? productData.quantity ?? "");
+                setReceivedDate(formatInputDate(productData.receivedDate || productData.date || ""));
+                setActive(productData.active === true || productData.active === 1 || productData.active === 'true');
             } else {
                 handleClear();
             }
@@ -73,8 +75,8 @@ function AddProductModal({ visible, onHide, onProductAdded, editMode = false, pr
             toast.current.show({ severity: 'warn', summary: 'Warning', detail: 'Please enter Selling Price' });
             return;
         }
-        else if (!quantity) {
-            toast.current.show({ severity: 'warn', summary: 'Warning', detail: 'Please enter Quantity' });
+        else if (!baseQuantity) {
+            toast.current.show({ severity: 'warn', summary: 'Warning', detail: 'Please enter Base Quantity' });
             return;
         }
         else if (!receivedDate) {
@@ -82,20 +84,25 @@ function AddProductModal({ visible, onHide, onProductAdded, editMode = false, pr
             return;
         }
 
-        const productDataPayload = { invoice, company, product, price, sellingPrice, quantity, receivedDate };
+        const productDataPayload = { invoice, company, product, price, sellingPrice, baseQuantity, receivedDate, active };
 
         setIsLoading(true);
         try {
+            let response;
             if (editMode && productData) {
                 const saveUpdate = productAPI.updateProduct;
-                await saveUpdate(productData.product_id || productData.id, productDataPayload);
-                toast.current.show({ severity: 'success', summary: 'Success', detail: 'Product updated successfully' });
+                response = await saveUpdate(productData.productId || productData.id, productDataPayload);
             } else {
-                await productAPI.addProduct(productDataPayload);
-                toast.current.show({ severity: 'success', summary: 'Success', detail: 'Product added successfully' });
+                response = await productAPI.addProduct(productDataPayload);
             }
-            handleClear();
-            onProductAdded();
+
+            if (response.success) {
+                toast.current.show({ severity: 'success', summary: 'Success', detail: response.message });
+                handleClear();
+                onProductAdded();
+            } else {
+                toast.current.show({ severity: 'error', summary: 'Error', detail: response.message || "Failed to save product" });
+            }
         } catch (error) {
             console.error('Error saving product:', error);
             const errorMessage = error.response?.data?.message || "Failed to save product";
@@ -111,8 +118,9 @@ function AddProductModal({ visible, onHide, onProductAdded, editMode = false, pr
         setProduct("");
         setPrice("");
         setSellingPrice("");
-        setQuantity("");
+        setBaseQuantity("");
         setReceivedDate("");
+        setActive(true);
     };
 
     const handleDialogHide = () => {
@@ -154,9 +162,9 @@ function AddProductModal({ visible, onHide, onProductAdded, editMode = false, pr
                             value={sellingPrice} onChange={(e) => setSellingPrice(e.target.value)} />
                     </div>
                     <div className="form-group col-md-4 col-12">
-                        <label htmlFor="quantity" className="form-label">Quantity:</label>
-                        <input id="quantity" type="number" placeholder="Enter quantity" className="form-control"
-                            value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+                        <label htmlFor="baseQuantity" className="form-label">Base Quantity:</label>
+                        <input id="baseQuantity" type="number" placeholder="Enter base quantity" className="form-control"
+                            value={baseQuantity} onChange={(e) => setBaseQuantity(e.target.value)} />
                     </div>
                 </div>
                 <div className="row mb-3">
@@ -165,6 +173,22 @@ function AddProductModal({ visible, onHide, onProductAdded, editMode = false, pr
                         <input id="receivedDate" type="date" className="form-control"
                             value={receivedDate} onChange={(e) => setReceivedDate(e.target.value)} />
                     </div>
+                    {editMode && (
+                        <div className="form-group col-md-4 col-12">
+                            <label htmlFor="active" className="form-label">Status:</label>
+                            <div className="d-flex align-items-center" style={{ paddingTop: '8px' }}>
+                                <div className="form-check form-switch" style={{ paddingLeft: '2.5em', margin: 0 }}>
+                                    <input id="active" className="form-check-input" type="checkbox" role="switch"
+                                        checked={active === true || active === 1 || active === 'true'}
+                                        onChange={(e) => setActive(e.target.checked)}
+                                        style={{ width: '2.5em', height: '1.25em' }} />
+                                </div>
+                                <span className="ms-2 form-text" style={{ fontSize: '1rem', color: (active === true || active === 1 || active === 'true') ? 'var(--success-color)' : 'var(--error-color)', fontWeight: 600 }}>
+                                    {active ? 'Active' : 'Inactive'}
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </div>
                 <div className="d-flex justify-content-between flex-wrap mt-4">
                     <button type="button" onClick={handleClear} className="btn btn-secondary mb-2" disabled={isLoading}>

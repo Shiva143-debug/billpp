@@ -13,10 +13,7 @@ import Shopping from "./components/Shopping";
 import Checkout from "./components/Checkout";
 import Details from "./components/Details";
 import Home from "./components/Home";
-import Customer from "./components/Customer";
-import Product from "./components/Product";
 import Reports from "./components/Reports";
-import Invoice from "./components/Invoice";
 import SplashScreen from "./components/SplashScreen";
 
 // Protected route component
@@ -50,7 +47,6 @@ function AppRoutes() {
       <Route path="/shopping" element={<ProtectedRoute><Shopping /></ProtectedRoute>} />
       <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
       <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-      <Route path="/invoice" element={<ProtectedRoute><Invoice /></ProtectedRoute>} />
       <Route path="/details" element={<ProtectedRoute><Details /></ProtectedRoute>} />
     </Routes>
   );

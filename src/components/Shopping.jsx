@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Toast } from 'primereact/toast';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { productAPI, cartAPI } from '../services/apiService';
 import "../styles/Shopping.css";
 
-function Shopping({ name, date, onHide, itemsAddedToCart, editMode = false, itemData = null }) {
+function Shopping({ customerId, date, onHide, itemsAddedToCart, editMode = false, itemData = null }) {
     const [products, setProducts] = useState([]);
     const [selectedProduct, setSelectedProduct] = useState("select");
     const [price, setPrice] = useState("");
@@ -19,11 +19,13 @@ function Shopping({ name, date, onHide, itemsAddedToCart, editMode = false, item
     // Set initial values if in edit mode
     useEffect(() => {
         if (editMode && itemData) {
-            setSelectedProduct(itemData.product_name);
+            setSelectedProduct(itemData.productId);
             setPrice(itemData.price);
             setQuantity(itemData.quantity);
+            const selectedProductData = products.find(p => String(p.id) === String(itemData.productId));
+            setAvailableQuantity(selectedProductData ? selectedProductData.quantity : 0);
         }
-    }, [editMode, itemData]);
+    }, [editMode, itemData, products]);
 
     // Fetch products
     useEffect(() => {
@@ -31,7 +33,7 @@ function Shopping({ name, date, onHide, itemsAddedToCart, editMode = false, item
             setIsLoading(true);
             try {
                 const response = await productAPI.getProducts();
-                if (Array.isArray(response.data)) {
+                if (response.success && Array.isArray(response.data)) {
                     setProducts(response.data);
                 } else {
                     setProducts([]);
@@ -51,9 +53,9 @@ function Shopping({ name, date, onHide, itemsAddedToCart, editMode = false, item
         const selectedValue = e.target.value;
         setSelectedProduct(selectedValue);
 
-        const selectedProductData = products.find(p => p.product_name === selectedValue);
+        const selectedProductData = products.find(p => String(p.id) === selectedValue);
         if (selectedProductData) {
-            setPrice(selectedProductData.selling_price);
+            setPrice(selectedProductData.sellingPrice);
             setAvailableQuantity(selectedProductData.quantity);
         } else {
             setPrice("");
@@ -82,24 +84,28 @@ function Shopping({ name, date, onHide, itemsAddedToCart, editMode = false, item
         setIsLoading(true);
 
         try {
-            const itemDataValues = { name, date, productName: selectedProduct, price, quantity: parseInt(quantity), totalAmount: price * quantity };
+            const itemDataValues = { customerId, date, productId: selectedProduct, price, quantity: parseInt(quantity) };
 
+            let response;
             if (editMode && itemData) {
-                await cartAPI.updateItem(itemData.item_id, itemDataValues);
-                toast.current.show({ severity: 'success', summary: 'Success', detail: 'Item updated successfully' });
+                response = await cartAPI.updateItem(itemData.itemId, itemDataValues);
             } else {
-                await cartAPI.addItem(itemDataValues);
-                toast.current.show({ severity: 'success', summary: 'Success', detail: 'Item added to cart successfully' });
+                response = await cartAPI.addItem(itemDataValues);
             }
 
-            setSelectedProduct("select");
-            setPrice("");
-            setQuantity("");
-            if (itemsAddedToCart) {
-                itemsAddedToCart();
-            }
-            if (onHide) {
-                onHide('Item Added to Cart successfully', 'success');
+            if (response.success) {
+                toast.current.show({ severity: 'success', summary: 'Success', detail: response.message });
+                setSelectedProduct("select");
+                setPrice("");
+                setQuantity("");
+                if (itemsAddedToCart) {
+                    itemsAddedToCart();
+                }
+                if (onHide) {
+                    onHide(response.message || 'Item Added to Cart successfully', 'success');
+                }
+            } else {
+                toast.current.show({ severity: 'error', summary: 'Error', detail: response.message });
             }
         } catch (error) {
             console.error('Error Added to Cart item:', error);
@@ -120,7 +126,7 @@ function Shopping({ name, date, onHide, itemsAddedToCart, editMode = false, item
             <Toast ref={toast} />
             <div>
                 <h2 className="shopping-heading">
-                    {editMode ? 'Update Product' : 'Add Product to Cart'}
+                    {editMode ? 'Update Product In Cart' : 'Add Product to Cart'}
                 </h2>
                 <form className="shopping-form" onSubmit={handleSubmit}>
                     <div className="row mb-3">
@@ -129,8 +135,8 @@ function Shopping({ name, date, onHide, itemsAddedToCart, editMode = false, item
                             <select id="product" className="form-control" value={selectedProduct} onChange={handleProductChange} disabled={editMode}>
                                 <option value="select">Select Product</option>
                                 {products.map((product) => (
-                                    <option key={product.product_id} value={product.product_name}>
-                                        {product.product_name} (Available: {product.quantity})
+                                    <option key={product.id} value={product.id}>
+                                        {product.productName}
                                     </option>
                                 ))}
                             </select>

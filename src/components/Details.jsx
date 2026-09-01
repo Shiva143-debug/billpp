@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { TabMenu } from 'primereact/tabmenu';
 import { Card } from 'primereact/card';
 import { InputText } from 'primereact/inputtext';
 import CustomerTable from "./CustomerTable";
 import ProductTable from "./ProductTable";
+import CompanyInvoice from "./CompanyInvoice";
 import AddCustomerModal from "./AddCustomerModal";
 import AddProductModal from "./AddProductModal";
 import Header from "./Header";
@@ -21,7 +22,8 @@ const Details = () => {
 
     const tabItems = [
         { label: 'Customer Details', icon: 'pi pi-users' },
-        { label: 'Product Details', icon: 'pi pi-shopping-bag' }
+        { label: 'Product Details', icon: 'pi pi-shopping-bag' },
+        { label: 'Company Invoice', icon: 'pi pi-file-pdf' }
     ];
 
     const handleTabChange = (e) => {
@@ -66,29 +68,35 @@ const Details = () => {
             <div className="details-container">
                 <Card className="details-card">
                     <TabMenu model={tabItems} activeIndex={activeTabIndex} onTabChange={handleTabChange} className="tab-container" />
-                    <div className="details-header d-flex justify-content-between align-items-center mb-4 mt-4 mx-3">
-                        <div className="search-container" style={{ margin: 0 }}>
-                            <span className="p-input-icon-left">
-                                {activeTabIndex === 0 ? (
-                                    <InputText value={customerSearch} onChange={(e) => setCustomerSearch(e.target.value)} placeholder="Search customers..." className="search-input" />
-                                ) : (
-                                    <InputText value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Search products..." className="search-input" />
-                                )}
-                            </span>
+                    {activeTabIndex < 2 && (
+                        <div className="details-header d-flex justify-content-between align-items-center mb-4 mt-4 mx-3">
+                            <div className="search-container" style={{ margin: 0 }}>
+                                <span className="p-input-icon-left">
+                                    {activeTabIndex === 0 ? (
+                                        <InputText value={customerSearch} onChange={(e) => setCustomerSearch(e.target.value)} placeholder="Search customers..." className="search-input" />
+                                    ) : (
+                                        <InputText value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Search products..." className="search-input" />
+                                    )}
+                                </span>
+                            </div>
+                            {activeTabIndex === 0 && (
+                                <button className="btn btn-success" onClick={() => setShowAddCustomerModal(true)} > + Add Customer</button>
+                            )}
+                            {activeTabIndex === 1 && (
+                                <button className="btn btn-success" onClick={() => { setEditingProduct(null); setShowAddProductModal(true); }}> + Add Product</button>
+                            )}
                         </div>
-                        {activeTabIndex === 0 && (
-                            <button className="btn btn-success" onClick={() => setShowAddCustomerModal(true)} > + Add Customer</button>
-                        )}
-                        {activeTabIndex === 1 && (
-                            <button className="btn btn-success" onClick={() => setShowAddProductModal(true)}> + Add Product</button>
-                        )}
-                    </div>
+                    )}
 
                     <div className="content-container" key={refreshKey}>
-                        {activeTabIndex === 0 ? (
+                        {activeTabIndex === 0 && (
                             <CustomerTable searchTerm={customerSearch} onEditCustomer={handleEditCustomer} />
-                        ) : (
+                        )}
+                        {activeTabIndex === 1 && (
                             <ProductTable searchTerm={productSearch} onEditProduct={handleEditProduct} />
+                        )}
+                        {activeTabIndex === 2 && (
+                            <CompanyInvoice />
                         )}
                     </div>
                 </Card>

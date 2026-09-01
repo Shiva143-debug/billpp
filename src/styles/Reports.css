@@ -152,10 +152,11 @@
 .reports-table {
   width: 100%;
   margin-bottom: var(--spacing-md);
-  border-collapse: collapse;
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
 }
 
-.reports-table th {
+.reports-table .p-datatable-thead > tr > th {
   background-color: var(--accent-color);
   color: var(--primary-bg);
   padding: 0.75rem;
@@ -164,26 +165,30 @@
   top: 0;
   z-index: 10;
   font-size: 0.95rem;
+  text-align: left;
+  border: none;
 }
 
-.reports-table td {
+.reports-table .p-datatable-tbody > tr > td {
   padding: 0.75rem;
   vertical-align: middle;
   font-size: 0.95rem;
+  text-align: left;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
 }
 
-.reports-table tr:nth-child(even) td {
+.reports-table .p-datatable-tbody > tr:nth-child(even) > td {
   background-color: rgba(45, 45, 45, 0.7);
 }
 
-.reports-table tr:nth-child(odd) td {
+.reports-table .p-datatable-tbody > tr:nth-child(odd) > td {
   background-color: rgba(30, 30, 30, 0.7);
 }
 
-.reports-table tfoot td {
-  background-color: var(--card-bg);
-  font-weight: 600;
-  color: var(--accent-color);
+.reports-table .p-paginator {
+  background: var(--card-bg);
+  border-top: 1px solid var(--border-color);
 }
 
 .table-container {

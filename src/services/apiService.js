@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// const BASE_URL = 'https://backend-bill-2.onrender.com';
 const BASE_URL = 'https://backend-bill-1.onrender.com';
 // const BASE_URL = 'http://localhost:4000';
 
@@ -51,132 +50,314 @@ api.interceptors.response.use(
   }
 );
 
+// Unwrap backend response body which follows the shape:
+// { success: true/false, message: '...', data: [] | {} }
+const handleResponse = (response) => {
+  const body = response?.data || {};
+  return {
+    success: body.success !== false,
+    message: body.message || 'Success',
+    data: body.data ?? null,
+  };
+};
+
+const handleError = (error) => {
+  const body = error?.response?.data || {};
+  return {
+    success: false,
+    message: body.message || error.message || 'Something went wrong',
+    data: null,
+  };
+};
+
 // Auth related API calls
 const authAPI = {
-  login: (credentials) => {
-    return api.post('/login', credentials);
+  login: async (credentials) => {
+    try {
+      const response = await api.post('/login', credentials);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  register: (userData) => {
-    return api.post('/register', userData);
+  register: async (userData) => {
+    try {
+      const response = await api.post('/register', userData);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  updatePassword: (userData) => {
-    return api.put('/updateUserPassword', userData);
+  updatePassword: async (userData) => {
+    try {
+      const response = await api.put('/updateUserPassword', userData);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   }
 };
 
 // Customer related API calls
 const customerAPI = {
-  getCustomers: () => {
-    return api.get('/get-customers');
+  getCustomers: async () => {
+    try {
+      const response = await api.get('/get-customers');
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  addCustomer: (customerData) => {
-    return api.post('/add-customer', customerData);
+  getAllCustomers: async () => {
+    try {
+      const response = await api.get('/get-all-customers');
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  updateCustomer: (customerId, customerData) => {
-    return api.put(`/update-customer/${customerId}`, customerData);
+  addCustomer: async (customerData) => {
+    try {
+      const response = await api.post('/add-customer', customerData);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  deleteCustomer: (customerId) => {
-    return api.delete(`/delete-customer/${customerId}`);
+  updateCustomer: async (customerId, customerData) => {
+    try {
+      const response = await api.put(`/update-customer/${customerId}`, customerData);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+  deleteCustomer: async (customerId) => {
+    try {
+      const response = await api.delete(`/delete-customer/${customerId}`);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   }
 };
 
 // Product related API calls
 const productAPI = {
-  getProducts: () => {
-    return api.get('/get-products');
+  getProducts: async () => {
+    try {
+      const response = await api.get('/get-products');
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  addProduct: (productData) => {
-    return api.post('/add-product', productData);
+  getAllProducts: async () => {
+    try {
+      const response = await api.get('/get-all-products');
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  updateProduct: (productId, productData) => {
-    return api.put(`/update-product/${productId}`, productData);
+  addProduct: async (productData) => {
+    try {
+      const response = await api.post('/add-product', productData);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  deleteProduct: (productId) => {
-    return api.delete(`/delete-product/${productId}`);
+
+  //pending
+  updateProduct: async (productId, productData) => {
+    try {
+      const response = await api.put(`/update-product/${productId}`, productData);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  deductProductQuantity: (deductData) => {
-    return api.put('/deduct-product-quantity', deductData);
+  deleteProduct: async (productId) => {
+    try {
+      const response = await api.delete(`/delete-product/${productId}`);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  addProductQuantity: (addedData) => {
-    return api.put('/add-product-quantity', addedData);
+
+  deductProductQuantity: async (deductData) => {
+    try {
+      const response = await api.put('/deduct-product-quantity', deductData);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+  addProductQuantity: async (addedData) => {
+    try {
+      const response = await api.put('/add-product-quantity', addedData);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   }
 };
 
 // Items/Cart related API calls
 const cartAPI = {
-  getItems: (customerName) => {
-    return api.get(`/get-cart-items/${customerName}`);
+  getItems: async (customerName) => {
+    try {
+      const response = await api.get(`/get-cart-items/${customerName}`);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  addItem: (itemData) => {
-    return api.post('/add-items-to-cart', itemData);
+  addItem: async (itemData) => {
+    try {
+      const response = await api.post('/add-items-to-cart', itemData);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  updateItem: (itemId, itemData) => {
-    return api.put(`/update-cart-items/${itemId}`, itemData);
+  updateItem: async (itemId, itemData) => {
+    try {
+      const response = await api.put(`/update-cart-items/${itemId}`, itemData);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  deleteItem: (itemId) => {
-    return api.delete(`/delete-cart-items/${itemId}`);
+  deleteItem: async (itemId) => {
+    try {
+      const response = await api.delete(`/delete-cart-items/${itemId}`);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   }
 };
 
 // Reports related API calls
 const reportsAPI = {
-  getRecentReports: () => {
-    return api.get('/recent-sales');
+  getRecentReports: async () => {
+    try {
+      const response = await api.get('/recent-sales');
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
 
-  getReportsByDate: (date) => {
-    return api.get(`/reports-by-date/${date}`);
+  getReportsByDate: async (date) => {
+    try {
+      const response = await api.get(`/reports-by-date/${date}`);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
 
-  getReportsByName: (name) => {
-    return api.get(`/reports-by-user/${name}`);
+  getReportsByName: async (name) => {
+    try {
+      const response = await api.get(`/reports-by-user/${name}`);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  getReportsByProductName: (productName) => {
-    return api.get(`/reports-by-product/${productName}`);
+  getReportsByProduct: async (productId) => {
+    try {
+      const response = await api.get(`/reports-by-product/${productId}`);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  getReportsByPaymentType: (paymentType) => {
-    return api.get(`/reports-by-payment-type/${paymentType}`);
+  getReportsByPaymentType: async (paymentType) => {
+    try {
+      const response = await api.get(`/reports-by-payment-type/${paymentType}`);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  getCashReportByDate: (date) => {
-    return api.get(`/get-cash-report/${date}`);
+  getCashReportByDate: async (date) => {
+    try {
+      const response = await api.get(`/get-cash-report/${date}`);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   }
 };
 
 // Invoice related API calls
 const invoiceAPI = {
-  getInvoiceProducts: () => {
-    return api.get('/get-invoice-products');
+  addInvoice: async (data) => {
+    try {
+      const response = await api.post('/add-company-invoice', data);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-
-  addInvoice: (data) => {
-    return api.post('/add-company-invoice', data);
+  getInvoices: async () => {
+    try {
+      const response = await api.get('/get-company-invoices');
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  getInvoices: () => {
-    return api.get('/get-company-invoices');
+  deleteCompanyInvoice: async (invoiceId) => {
+    try {
+      const response = await api.delete(`/delete-company-invoice/${invoiceId}`);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  // updateInvoiceProduct: (id, data) => {
-  //   return api.put(`/update-invoice-product/${id}`, data);
-  // },
-  // deleteInvoiceProduct: (id) => {
-  //   return api.delete(`/delete-invoice-product/${id}`);
-  // }
 };
 
 // Checkout related API calls
 const checkoutAPI = {
-  exportToSales: (itemsArray) => {
-    return api.post('/add-item-in-reports', { itemsArray });
+  exportToSales: async (itemsArray) => {
+    try {
+      const response = await api.post('/add-item-in-reports', { itemsArray });
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
 
-  deleteItems: (customerName) => {
-    return api.delete(`/delete-all-items-in-cart-after-check-out/${customerName}`);
+  deleteItems: async (customerName) => {
+    try {
+      const response = await api.delete(`/delete-all-items-in-cart-after-check-out/${customerName}`);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
 
-  processPayment: (paymentData) => {
-    return api.post('/payment', paymentData);
+  processPayment: async (paymentData) => {
+    try {
+      const response = await api.post('/payment', paymentData);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   },
-  processCashPayment: (cashData) => {
-    return api.post('/cash-pay', cashData);
+  processCashPayment: async (cashData) => {
+    try {
+      const response = await api.post('/cash-pay', cashData);
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   }
 };
 

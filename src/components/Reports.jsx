@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { TabMenu } from 'primereact/tabmenu';
@@ -19,7 +19,6 @@ const Reports = () => {
     const [customers, setCustomers] = useState([]);
     const [products, setProducts] = useState([]);
     const [reportData, setReportData] = useState([]);
-    const [paymentTypeData, setPaymentTypeData] = useState([]);
     const [cashReportData, setCashReportData] = useState([]);
     const [recentPurchases, setRecentPurchases] = useState([]);
     const [date, setDate] = useState(null);
@@ -27,7 +26,6 @@ const Reports = () => {
     const [paymentType, setPaymentType] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [isLoading, setIsLoading] = useState(true);
-    const [grandTotal, setGrandTotal] = useState(0);
 
     const tabItems = [
         { label: 'By Purchase Date', icon: 'pi pi-calendar' },
@@ -46,12 +44,11 @@ const Reports = () => {
         const fetchCustomers = async () => {
             try {
                 const response = await customerAPI.getCustomers();
-                const data = response.data;
 
-                if (Array.isArray(data)) {
-                    const formattedCustomers = data.map(customer => ({
+                if (response.success && Array.isArray(response.data)) {
+                    const formattedCustomers = response.data.map(customer => ({
                         label: customer.name,
-                        value: customer.name
+                        value: customer.customerId
                     }));
                     setCustomers(formattedCustomers);
                 } else {
@@ -70,12 +67,11 @@ const Reports = () => {
         const fetchProducts = async () => {
             try {
                 const response = await productAPI.getProducts();
-                const data = response.data;
 
-                if (Array.isArray(data)) {
-                    const formattedProducts = data.map(product => ({
-                        label: product.product_name,
-                        value: product.product_name
+                if (response.success && Array.isArray(response.data)) {
+                    const formattedProducts = response.data.map(product => ({
+                        label: product.productName,
+                        value: product.id
                     }));
                     setProducts(formattedProducts);
                 } else {
@@ -96,9 +92,8 @@ const Reports = () => {
             setIsLoading(true);
             try {
                 const response = await reportsAPI.getRecentReports();
-                if (Array.isArray(response.data)) {
+                if (response.success && Array.isArray(response.data)) {
                     setRecentPurchases(response.data);
-                    calculateGrandTotal(response.data);
                 } else {
                     setRecentPurchases([]);
                 }
@@ -127,37 +122,45 @@ const Reports = () => {
                         if (date) {
                             const formattedDate = formatDate(date);
                             response = await reportsAPI.getReportsByDate(formattedDate)
-                            const data = response.data
-                            setReportData(data);
-                            calculateGrandTotal(data);
+                            if (response.success) {
+                                const data = response.data
+                                setReportData(data);
+
+                            }
                         }
                         break;
 
                     case 'Customer':
                         if (selectedOption) {
                             response = await reportsAPI.getReportsByName(selectedOption)
-                            const data = response.data
-                            setReportData(data);
-                            calculateGrandTotal(data);
+                            if (response.success) {
+                                const data = response.data
+                                setReportData(data);
+
+                            }
                         }
                         break;
 
                     case 'Product':
                         if (selectedOption) {
-                            response = await reportsAPI.getReportsByProductName(selectedOption)
-                            const data = response.data
-                            setReportData(data);
-                            calculateGrandTotal(data);
+                            const productId = selectedOption;
+                            response = await reportsAPI.getReportsByProduct(productId)
+                            if (response.success) {
+                                const data = response.data
+                                setReportData(data);
+
+                            }
                         }
                         break;
 
                     case 'Payment':
                         if (paymentType) {
                             response = await reportsAPI.getReportsByPaymentType(paymentType)
-                            const data = response.data
-                            setReportData(data);
-                            calculateGrandTotal(data);
-                            // setPaymentTypeData(data);
+                            if (response.success) {
+                                const data = response.data
+                                setReportData(data);
+
+                            }
                         }
                         break;
 
@@ -165,9 +168,10 @@ const Reports = () => {
                         if (cashDate) {
                             const formattedDate = formatDate(cashDate);
                             response = await reportsAPI.getCashReportByDate(formattedDate)
-                            const data = response.data
-                            setCashReportData(data);
-                            // calculateGrandTotal(data);
+                            if (response.success) {
+                                const data = response.data
+                                setCashReportData(data);
+                            }
                         }
                         break;
 
@@ -204,16 +208,6 @@ const Reports = () => {
         return `${day}/${month}/${year}`;
     };
 
-    const calculateGrandTotal = (data) => {
-        if (!Array.isArray(data)) return;
-
-        const total = data.reduce((acc, item) => {
-            return acc + (parseFloat(item.total_amount || item.amount) || 0);
-        }, 0);
-
-        setGrandTotal(total);
-    };
-
     const handleTabChange = (e) => {
         setActiveTabIndex(e.index);
 
@@ -223,7 +217,6 @@ const Reports = () => {
         setPaymentType(null);
         setCashDate(null);
         setReportData([]);
-        setPaymentTypeData([]);
         setCashReportData([]);
         setSearchTerm("");
 
@@ -254,7 +247,7 @@ const Reports = () => {
         return data.filter(item => {
             return (
                 (item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (item.product_name && item.product_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (item.productName && item.productName.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (item.date && formatDisplayDate(item.date).includes(searchTerm))
             );
         });
@@ -398,13 +391,13 @@ const Reports = () => {
                                     <div className="summary-box">
                                         <span className="summary-text">Total Amount:</span>
                                         <span className="summary-value">
-                                            ₹{cashReportData.reduce((acc, item) => acc + (parseFloat(item.grand_total) || 0), 0).toFixed(2)}
+                                            ₹{cashReportData.reduce((acc, item) => acc + (parseFloat(item.grandTotal) || 0), 0).toFixed(2)}
                                         </span>
                                     </div>
                                 </div>
                             }
                         >
-                            <Column field="name" header="Submitted By" />
+                            <Column field="customerName" header="customer" />
                             <Column field="twothousandnotes" header="2000" />
                             <Column field="fivehundrednotes" header="500" />
                             <Column field="twohundrednotes" header="200" />
@@ -415,7 +408,7 @@ const Reports = () => {
                             <Column field="fiverupees" header="5" />
                             <Column field="tworupees" header="2" />
                             <Column field="onerupees" header="1" />
-                            <Column field="grand_total" header="Total" />
+                            <Column field="grandTotal" header="Total" />
                         </DataTable>
                         )}
                     </div>
@@ -426,18 +419,18 @@ const Reports = () => {
 
     const renderRecentPurchasesTable = () => {
         const filteredData = filterData(recentPurchases, searchTerm);
-        const tableTotal = filteredData.reduce((acc, item) => acc + (parseFloat(item.total_amount || 0) || 0), 0);
+        const tableTotal = filteredData.reduce((acc, item) => acc + (parseFloat(item.totalAmount || 0) || 0), 0);
 
         return (
             <>
                 <div className="table-container">
                     <DataTable paginator rows={5} value={filteredData} className="reports-table" responsiveLayout="scroll" stripedRows emptyMessage="No purchase records found" footer={<div className="summary-container"><div className="summary-box"><span className="summary-text">Grand Total:</span><span className="summary-value">₹{tableTotal.toFixed(2)}</span></div></div>}>
                         <Column field="date" header="Date" body={dateTemplate} />
-                        <Column field="name" header="Customer Name" />
-                        <Column field="product_name" header="Product Name" />
+                        <Column field="customerName" header="Customer Name" />
+                        <Column field="productName" header="Product Name" />
                         <Column field="price" header="Price" />
                         <Column field="quantity" header="Quantity" />
-                        <Column field="total_amount" header="Total Amount" />
+                        <Column field="totalAmount" header="Total Amount" />
                     </DataTable>
                 </div>
             </>
@@ -446,7 +439,7 @@ const Reports = () => {
 
     const renderReportTable = () => {
         const filteredData = filterData(reportData, searchTerm);
-        const tableTotal = filteredData.reduce((acc, item) => acc + (parseFloat(item.total_amount || item.amount || 0) || 0), 0);
+        const tableTotal = filteredData.reduce((acc, item) => acc + (parseFloat(item.totalAmount || item.amount || 0) || 0), 0);
 
         // if (filteredData.length === 0) {
         //     return (
@@ -463,11 +456,11 @@ const Reports = () => {
                 <div className="table-container">
                     <DataTable paginator rows={5} value={filteredData} className="reports-table" responsiveLayout="scroll" stripedRows emptyMessage="No records found" footer={<div className="summary-container"><div className="summary-box"><span className="summary-text">Grand Total:</span><span className="summary-value">₹{tableTotal.toFixed(2)}</span></div></div>}>
                         {reportType !== 'Date' && <Column field="date" header="Date" body={dateTemplate} />}
-                        {reportType !== 'Customer' && <Column field="name" header="Customer Name" />}
-                        {(reportType !== 'Product' && reportType !== 'Payment') && <Column field="product_name" header="Product Name" />}
+                        {reportType !== 'Customer' && <Column field="customerName" header="Customer Name" />}
+                        {(reportType !== 'Product' && reportType !== 'Payment') && <Column field="productName" header="Product Name" />}
                         {reportType !== 'Payment' && <Column field="price" header="Price" />}
                         {reportType !== 'Payment' && <Column field="quantity" header="Quantity" />}
-                        {reportType !== 'Payment' && <Column field="total_amount" header="Total Amount" />}
+                        {reportType !== 'Payment' && <Column field="totalAmount" header="Total Amount" />}
                         {reportType === 'Payment' && <Column field="amount" header="Total Amount" />}
                     </DataTable>
                 </div>

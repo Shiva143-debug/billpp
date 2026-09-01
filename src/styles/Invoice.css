@@ -217,16 +217,18 @@
   z-index: 10;
   font-size: 0.95rem;
   border: none;
-  text-align: center;
+  text-align: left;
 }
 
-.invoice-table td {
+.invoice-table .p-datatable-tbody > tr > td {
   padding: var(--spacing-md);
-  text-align: left; /* Change this from center to left */
+  text-align: left;
   vertical-align: middle;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
 }
 
-.invoice-table tr:nth-child(even) td {
+.invoice-table .p-datatable-tbody > tr:nth-child(even) > td {
   background-color: rgba(45, 45, 45, 0.7);
 }
 

@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Toast } from 'primereact/toast';
 import { Dialog } from 'primereact/dialog';
 import { ProgressSpinner } from 'primereact/progressspinner';
+import { DataTable } from 'primereact/datatable';
+import { Column } from 'primereact/column';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { MdDelete } from "react-icons/md";
 import { GrUpdate } from "react-icons/gr";
@@ -46,9 +48,9 @@ function Home() {
             setContactNo("");
             return;
         }
-        const selectedData = customers.find(d => d.name === selectedValue);
+        const selectedData = customers.find(d => d.customerId == selectedValue);
         setAddress(selectedData ? selectedData.address : "");
-        setContactNo(selectedData ? selectedData.contact_no : "");
+        setContactNo(selectedData ? selectedData.contactNo : "");
         setShowProductCart(true);
     };
 
@@ -78,14 +80,18 @@ function Home() {
     const handleDelete = async (itemId) => {
         setIsLoading(true);
         try {
-            await cartAPI.deleteItem(itemId);
-            toast.current.show({ severity: 'success', summary: 'Success', detail: "Item Removed From Cart successfully" });
-            setItems((prevItems) => {
-                const newItems = prevItems.filter((item) => item.item_id !== itemId);
-                const newTotal = newItems.reduce((acc, item) => acc + (Number(item.total_amount) || 0), 0);
-                setGrandTotal(newTotal);
-                return newItems;
-            });
+            const response = await cartAPI.deleteItem(itemId);
+            if (response.success) {
+                toast.current.show({ severity: 'success', summary: 'Success', detail: response.message });
+                setItems((prevItems) => {
+                    const newItems = prevItems.filter((item) => item.itemId !== itemId);
+                    const newTotal = newItems.reduce((acc, item) => acc + (Number(item.totalAmount) || 0), 0);
+                    setGrandTotal(newTotal);
+                    return newItems;
+                });
+            } else {
+                toast.current.show({ severity: 'error', summary: 'Error', detail: response.message });
+            }
         } catch (error) {
             console.error('Error during item deletion:', error);
             toast.current.show({ severity: 'error', summary: 'Error', detail: "Failed to delete item" });
@@ -100,7 +106,9 @@ function Home() {
     };
 
     const proceedToBuy = () => {
-        const orderDetails = { selectedOption, address, contactNo, grandTotal, items, date };
+        const selectedCustomer = customers.find(d => String(d.customerId) === String(selectedOption));
+        const customerName = selectedCustomer ? selectedCustomer.name : selectedOption;
+        const orderDetails = { selectedOption, customerName, address, contactNo, grandTotal, items, date };
 
         const processItems = async () => {
             setIsLoading(true);
@@ -108,10 +116,10 @@ function Home() {
 
             for (const item of orderDetails.items) {
                 try {
-                    const deductValues = { productName: item.product_name, quantity: item.quantity };
+                    const deductValues = { productId: item.productId, quantity: item.quantity };
                     const response = await productAPI.deductProductQuantity(deductValues);
-                    if (response.data.message && response.data.message.includes("greater than what the store has in stock")) {
-                        toast.current.show({ severity: 'warn', summary: 'Warning', detail: response.data.message });
+                    if (!response.success) {
+                        toast.current.show({ severity: 'warn', summary: 'Warning', detail: response.message });
                         allItemsProcessed = false;
                         break;
                     }
@@ -135,7 +143,7 @@ function Home() {
     const fetchCustomers = async () => {
         try {
             const response = await customerAPI.getCustomers();
-            if (Array.isArray(response.data)) {
+            if (response.success && Array.isArray(response.data)) {
                 setCustomers(response.data);
             } else {
                 setCustomers([]);
@@ -157,7 +165,7 @@ function Home() {
                 setIsLoading(true);
                 const today = new Date().toISOString().split('T')[0];
                 const response = await reportsAPI.getRecentReports();
-                if (Array.isArray(response.data)) {
+                if (response.success && Array.isArray(response.data)) {
                     setRecentSales(response.data);
                 } else {
                     setRecentSales([]);
@@ -187,10 +195,10 @@ function Home() {
             setIsLoading(true);
             try {
                 const response = await cartAPI.getItems(selectedOption);
-                if (response.data && response.data.length > 0) {
+                if (response.success && response.data && response.data.length > 0) {
                     let total = 0;
                     response.data.forEach((d) => {
-                        total += Number(d.total_amount) || 0;
+                        total += Number(d.totalAmount) || 0;
                     });
                     setItems(response.data);
                     setGrandTotal(total);
@@ -226,7 +234,7 @@ function Home() {
                                 <select id="customerSelect" className="form-control" value={selectedOption} onChange={handleSelectChange}>
                                     <option value="">Select Customer...</option>
                                     {customers.map((customer) => (
-                                        <option key={customer.customer_id} value={customer.name}> {customer.name}</option>
+                                        <option key={customer.customerId} value={customer.customerId}> {customer.name}</option>
                                     ))}
                                 </select>
                                 <button className="add-customer-icon-btn" onClick={() => setShowAddCustomerModal(true)} title="Add new customer"><AiOutlinePlus /> </button>
@@ -265,28 +273,13 @@ function Home() {
                     {!isLoading && !selectedOption && recentSales.length > 0 && (
                         <div className="recent-sales-container mt-4">
                             <h4 style={{ color: 'var(--text-primary)', marginBottom: '1rem' }}>Recent Purchases</h4>
-                            <div className="table-responsive">
-                                <table className="cart-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Product Name</th>
-                                            <th>Customer Name</th>
-                                            <th>Quantity</th>
-                                            <th>Total Amount</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {recentSales.map((sale, i) => (
-                                            <tr key={i}>
-                                                <td>{sale.product_name}</td>
-                                                <td>{sale.name}</td>
-                                                <td>{sale.quantity}</td>
-                                                <td>₹{parseInt(sale.total_amount).toFixed(0)}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                            <DataTable value={recentSales} paginator rows={5} responsiveLayout="scroll" stripedRows className="customer-table" emptyMessage="No Products found">
+                                <Column field="productName" header="Product Name" />
+                                <Column field="customerName" header="Customer Name" />
+                                <Column field="quantity" header="Quantity" />
+                                <Column header="Date" body={(rowData) => new Date(rowData.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} />
+                                <Column header="Total Amount" body={(rowData) => `₹${parseInt(rowData.totalAmount).toFixed(0)}`} />
+                            </DataTable>
                         </div>
                     )}
 
@@ -316,42 +309,26 @@ function Home() {
                                 )}
                                 {items.length > 0 && (
                                     <>
-                                        <div className="table-responsive">
-                                            <table className="cart-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Product Name</th>
-                                                        <th>Price</th>
-                                                        <th>Quantity</th>
-                                                        <th>Total Amount</th>
-                                                        <th>Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {items.map((item, i) => (
-                                                        <tr key={i}>
-                                                            <td>{item.product_name}</td>
-                                                            <td>{item.price}</td>
-                                                            <td>{item.quantity}</td>
-                                                            <td>{item.total_amount}</td>
-                                                            <td>
-                                                                {!isMobile ? (
-                                                                    <>
-                                                                        <button type="button" className="btn btn-primary mx-2" onClick={() => handleEdit(item)}>Edit</button>
-                                                                        <button type="button" className="btn btn-danger " onClick={() => handleDelete(item.item_id)}>Remove</button>
-                                                                    </>
-                                                                ) : (
-                                                                    <>
-                                                                        <GrUpdate className="action-button update-button mx-2" onClick={() => handleEdit(item)} />
-                                                                        <MdDelete className="action-button delete-button" onClick={() => handleDelete(item.item_id)} />
-                                                                    </>
-                                                                )}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                        <DataTable value={items} paginator rows={5} responsiveLayout="scroll" stripedRows className="customer-table" emptyMessage="No items in your cart">
+                                            <Column header="Date" body={(rowData) => new Date(rowData.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} />
+                                            <Column field="productName" header="Product Name" />
+                                            <Column field="price" header="Price" />
+                                            <Column field="quantity" header="Quantity" />
+                                            <Column field="totalAmount" header="Total Amount" />
+                                            <Column header="Actions" body={(rowData) => (
+                                                !isMobile ? (
+                                                    <>
+                                                        <button type="button" className="btn btn-primary mx-2" onClick={() => handleEdit(rowData)}>Edit</button>
+                                                        <button type="button" className="btn btn-danger " onClick={() => handleDelete(rowData.itemId)}>Remove</button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <GrUpdate className="action-button update-button mx-2" onClick={() => handleEdit(rowData)} />
+                                                        <MdDelete className="action-button delete-button" onClick={() => handleDelete(rowData.itemId)} />
+                                                    </>
+                                                )
+                                            )} />
+                                        </DataTable>
 
                                         <div className="grand-total">
                                             Grand Total: ₹{grandTotal.toFixed(2)}
@@ -369,12 +346,12 @@ function Home() {
             </div>
 
             <Dialog visible={visible} style={{ width: isMobile ? '100vw' : "80vw" }} onHide={() => setVisible(false)}>
-                <Shopping name={selectedOption} date={date} onHide={onHide} itemsAddedToCart={itemsAddedToCart} />
+                <Shopping customerId={selectedOption} date={date} onHide={onHide} itemsAddedToCart={itemsAddedToCart} />
             </Dialog>
 
             <Dialog visible={visibleEdit} style={{ width: isMobile ? '100vw' : "80vw" }} onHide={() => setVisibleEdit(false)} >
                 {selectedRowData && (
-                    <Shopping name={selectedOption} date={date} onHide={onHide} itemsAddedToCart={itemsAddedToCart} editMode={true} itemData={selectedRowData} />
+                    <Shopping customerId={selectedOption} date={date} onHide={onHide} itemsAddedToCart={itemsAddedToCart} editMode={true} itemData={selectedRowData} />
                 )}
             </Dialog>
             <AddCustomerModal visible={showAddCustomerModal} onHide={() => setShowAddCustomerModal(false)} onCustomerAdded={handleCustomerAdded} />

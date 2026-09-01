@@ -49,10 +49,7 @@ const Header = () => {
     function getActiveButton(pathname) {
         switch (pathname) {
             case "/home": return "home";
-            case "/product": return "product";
-            case "/customer": return "customer";
             case "/reports": return "reports";
-            case "/invoice": return "invoice";
             case "/details": return "details";
             default: return "home";
         }
@@ -78,7 +75,6 @@ const Header = () => {
                     <ul className="nav-menu">
                         <li><Link to="/home" onClick={() => setActiveButton("home")} className={activeButton === "home" ? "active-nav" : ""}>Home</Link></li>
                         <li><Link to="/reports" onClick={() => setActiveButton("reports")} className={activeButton === "reports" ? "active-nav" : ""}>Reports</Link></li>
-                        <li><Link to="/invoice" onClick={() => setActiveButton("invoice")} className={activeButton === "invoice" ? "active-nav" : ""}>Invoice</Link></li>
                         <li><Link to="/details" onClick={() => setActiveButton("details")} className={activeButton === "details" ? "active-nav" : ""}>Details</Link></li>
                     </ul>
                 )}
@@ -93,7 +89,6 @@ const Header = () => {
                     <ul className="nav-menu-list-mobile">
                         <li><Link to="/home" onClick={() => setActiveButton("home")} className={activeButton === "home" ? "active-nav" : ""}><TbHome className="nav-icon" /></Link></li>
                         <li><Link to="/reports" onClick={() => setActiveButton("reports")} className={activeButton === "reports" ? "active-nav" : ""}><TbReportSearch className="nav-icon" /></Link></li>
-                        <li><Link to="/invoice" onClick={() => setActiveButton("invoice")} className={activeButton === "invoice" ? "active-nav" : ""}><FaFileInvoice className="nav-icon" /></Link></li>
                         <li><Link to="/details" onClick={() => setActiveButton("details")} className={activeButton === "details" ? "active-nav" : ""}><BiSolidDetail className="nav-icon" /></Link></li>
                     </ul>
                 </div>

@@ -4,6 +4,7 @@ import { Toast } from 'primereact/toast';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { authAPI } from '../services/apiService';
 import { ProgressSpinner } from 'primereact/progressspinner';
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import "../styles/Login.css";
 
 function Login({ onLogin }) {
@@ -19,7 +20,10 @@ function Login({ onLogin }) {
     const [updatedPassword, setUpdatedPassword] = useState("");
     const [updatedConfirmPassword, setUpdatedConfirmPassword] = useState("");
     const [passwordsMatch, setPasswordsMatch] = useState(true);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);
@@ -50,13 +54,13 @@ function Login({ onLogin }) {
             setIsLoading(true);
             const response = await authAPI.register(userData);
 
-            if (response.data.success) {
-                toast.current.show({ severity: 'success', summary: 'Success', detail: response.data.message });
+            if (response.success) {
+                toast.current.show({ severity: 'success', summary: 'Success', detail: response.message });
                 setFullName("");
                 setEmail("");
                 setMobileNumber("");
             } else {
-                toast.current.show({ severity: 'error', summary: 'Error', detail: response.data.message || "Registration failed" });
+                toast.current.show({ severity: 'error', summary: 'Error', detail: response.message || "Registration failed" });
             }
         } catch (error) {
             const message = error.response?.data?.error || "Something went wrong. Please try again.";
@@ -82,18 +86,19 @@ function Login({ onLogin }) {
 
         try {
             setIsLoading(true);
-            const { data, status } = await authAPI.login(credentials);
+            const response = await authAPI.login(credentials);
 
-            if (status === 200) {
-                await onLogin(data);
-                toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Successful' });
+            if (response.success && response.data?.token) {
+                const loginData = { token: response.data.token, user: response.data.user };
+                await onLogin(loginData);
+                toast.current.show({ severity: 'success', summary: 'Success', detail: response.message || 'Login Successful' });
                 setLoginMobileNo("");
                 setPassword("");
                 setTimeout(() => {
                     navigate("/home");
                 }, 1500);
             } else {
-                toast.current.show({ severity: 'error', summary: 'Error', detail: 'Invalid Credentials' });
+                toast.current.show({ severity: 'error', summary: 'Error', detail: response.message || 'Invalid Credentials' });
             }
         } catch (error) {
             const errMsg = error?.response?.data?.error || error.message || "Login Failed";
@@ -132,17 +137,19 @@ function Login({ onLogin }) {
 
         try {
             setIsLoading(true);
-            const { data, status } = await authAPI.updatePassword(userData);
+            const response = await authAPI.updatePassword(userData);
 
-            if (status) {
-                toast.current.show({ severity: 'success', summary: 'Success', detail: "Password Updated Successfully" });
+            if (response.success) {
+                toast.current.show({ severity: 'success', summary: 'Success', detail: response.message || "Password Updated Successfully" });
                 setEmail("");
                 setUpdatedPassword("");
                 setUpdatedConfirmPassword("");
                 setPasswordsMatch(true);
+                setShowNewPassword(false);
+                setShowConfirmPassword(false);
                 setShowForget(false);
             } else {
-                toast.current.show({ severity: 'error', summary: 'Error', detail: "password update failed" });
+                toast.current.show({ severity: 'error', summary: 'Error', detail: response.message || "password update failed" });
             }
         } catch (error) {
             const errMsg = error?.response?.data?.error || error.message || "password update Failed";
@@ -212,7 +219,12 @@ function Login({ onLogin }) {
 
                             <div className="form-group">
                                 <label htmlFor="password">Password:</label>
-                                <input id="password" type="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-control" disabled={loading} />
+                                <div className="password-wrapper">
+                                    <input id="password" type={showPassword ? "text" : "password"} placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-control" disabled={loading} />
+                                    <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)} disabled={loading}>
+                                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="forgot-password" onClick={!loading ? handleForgotLinkClick : null} style={{ cursor: loading ? 'not-allowed' : 'pointer' }}>Forgot Password?</div>
@@ -240,12 +252,22 @@ function Login({ onLogin }) {
 
                         <div className="form-group">
                             <label htmlFor="newPassword">New Password:</label>
-                            <input id="newPassword" type="password" placeholder="Enter new password" value={updatedPassword} onChange={(e) => setUpdatedPassword(e.target.value)} className="form-control" disabled={loading} />
+                            <div className="password-wrapper">
+                                <input id="newPassword" type={showNewPassword ? "text" : "password"} placeholder="Enter new password" value={updatedPassword} onChange={(e) => setUpdatedPassword(e.target.value)} className="form-control" disabled={loading} />
+                                <button type="button" className="password-toggle" onClick={() => setShowNewPassword(!showNewPassword)} disabled={loading}>
+                                    {showNewPassword ? <FaEyeSlash /> : <FaEye />}
+                                </button>
+                            </div>
                         </div>
 
                         <div className="form-group">
                             <label htmlFor="confirmPassword">Confirm Password:</label>
-                            <input id="confirmPassword" type="password" placeholder="Confirm new password" value={updatedConfirmPassword} onChange={(e) => setUpdatedConfirmPassword(e.target.value)} className={`form-control ${!passwordsMatch ? 'is-invalid' : ''}`} disabled={loading} />
+                            <div className="password-wrapper">
+                                <input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} placeholder="Confirm new password" value={updatedConfirmPassword} onChange={(e) => setUpdatedConfirmPassword(e.target.value)} className={`form-control ${!passwordsMatch ? 'is-invalid' : ''}`} disabled={loading} />
+                                <button type="button" className="password-toggle" onClick={() => setShowConfirmPassword(!showConfirmPassword)} disabled={loading}>
+                                    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                                </button>
+                            </div>
                             {!passwordsMatch && (
                                 <div className="invalid-feedback"> Passwords do not match</div>
                             )}

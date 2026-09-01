@@ -195,10 +195,11 @@
 .customer-table {
   width: 100%;
   margin-bottom: var(--spacing-lg);
-  border-collapse: collapse;
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
 }
 
-.customer-table th {
+.customer-table .p-datatable-thead > tr > th {
   background-color: var(--accent-color);
   color: var(--primary-bg);
   padding: 0.75rem;
@@ -207,34 +208,64 @@
   top: 0;
   z-index: 10;
   font-size: 0.95rem;
+  text-align: left;
+  border: none;
 }
 
-.customer-table td {
+.customer-table .p-datatable-tbody > tr > td {
   padding: 0.75rem;
   vertical-align: middle;
   font-size: 0.95rem;
+  text-align: left;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
 }
 
-.customer-table tr:nth-child(even) td {
+.customer-table .p-datatable-tbody > tr:nth-child(even) > td {
   background-color: rgba(45, 45, 45, 0.7);
 }
 
-.customer-table tr:nth-child(odd) td {
+.customer-table .p-datatable-tbody > tr:nth-child(odd) > td {
   background-color: rgba(30, 30, 30, 0.7);
 }
 
-.customer-table tfoot td {
-  background-color: var(--card-bg);
-  font-weight: 600;
-  color: var(--accent-color);
+.customer-table .p-paginator {
+  background: var(--card-bg);
+  border-top: 1px solid var(--border-color);
+}
+
+.table-actions {
+  justify-content: flex-start;
 }
 
 /* Action buttons for edit/delete */
 .table-actions {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   gap: 0.5rem;
+}
+
+.customer-status {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.customer-status-active {
+  background-color: rgba(3, 218, 198, 0.15);
+  color: var(--success-color);
+  border: 1px solid var(--success-color);
+}
+
+.customer-status-inactive {
+  background-color: rgba(207, 102, 121, 0.15);
+  color: var(--error-color);
+  border: 1px solid var(--error-color);
 }
 
 .action-btn {
@@ -262,6 +293,15 @@
 
 .action-edit:hover {
   background-color: rgba(187, 134, 252, 0.3);
+}
+
+.action-view {
+  background-color: rgba(33, 150, 243, 0.15);
+  color: #2196f3;
+}
+
+.action-view:hover {
+  background-color: rgba(33, 150, 243, 0.3);
 }
 
 .action-delete {

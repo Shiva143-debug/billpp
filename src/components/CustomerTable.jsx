@@ -17,15 +17,15 @@ function CustomerTable({ searchTerm = "", onEditCustomer }) {
         return (
             (item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (item.address && item.address.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (item.contact_no && String(item.contact_no).includes(searchTerm))
+            (item.contactNo && String(item.contactNo).includes(searchTerm))
         );
     });
 
     const fetchCustomerData = async () => {
         setIsLoading(true);
         try {
-            const response = await customerAPI.getCustomers();
-            if (Array.isArray(response.data)) {
+            const response = await customerAPI.getAllCustomers();
+            if (response.success && Array.isArray(response.data)) {
                 setData(response.data);
             } else {
                 setData([]);
@@ -50,9 +50,13 @@ function CustomerTable({ searchTerm = "", onEditCustomer }) {
             acceptClassName: 'p-button-danger',
             accept: async () => {
                 try {
-                    await customerAPI.deleteCustomer(rowData.customer_id);
-                    toast.current.show({ severity: 'success', summary: 'Success', detail: 'Customer deleted successfully' });
-                    fetchCustomerData();
+                    const response = await customerAPI.deleteCustomer(rowData.customerId);
+                    if (response.success) {
+                        toast.current.show({ severity: 'success', summary: 'Success', detail: response.message });
+                        fetchCustomerData();
+                    } else {
+                        toast.current.show({ severity: 'error', summary: 'Error', detail: response.message });
+                    }
                 } catch (error) {
                     console.error('Error deleting customer:', error);
                     toast.current.show({ severity: 'error', summary: 'Error', detail: 'Failed to delete customer' });
@@ -62,15 +66,27 @@ function CustomerTable({ searchTerm = "", onEditCustomer }) {
     };
 
     const actionsTemplate = (rowData) => {
+        const isActive = rowData.active === true || rowData.active === 1 || rowData.active === 'true';
         return (
             <div className="table-actions">
                 <button type="button" className="action-btn action-edit" title="Edit Customer" onClick={() => onEditCustomer(rowData)}>
                     <MdEdit />
                 </button>
-                <button type="button" className="action-btn action-delete" title="Delete Customer" onClick={() => handleDelete(rowData)}>
-                    <MdDelete />
-                </button>
+                {isActive && (
+                    <button type="button" className="action-btn action-delete" title="Delete Customer" onClick={() => handleDelete(rowData)}>
+                        <MdDelete />
+                    </button>
+                )}
             </div>
+        );
+    };
+
+    const statusTemplate = (rowData) => {
+        const isActive = rowData.active === true || rowData.active === 1 || rowData.active === 'true';
+        return (
+            <span className={`customer-status ${isActive ? 'customer-status-active' : 'customer-status-inactive'}`}>
+                {isActive ? 'Active' : 'Inactive'}
+            </span>
         );
     };
 
@@ -92,8 +108,9 @@ function CustomerTable({ searchTerm = "", onEditCustomer }) {
                     <DataTable value={filteredData} paginator rows={5} responsiveLayout="scroll" stripedRows className="customer-table" emptyMessage="No Customers found">
                         <Column field="name" header="Name" />
                         <Column field="address" header="Address" />
-                        <Column field="contact_no" header="Contact Number" />
-                        <Column header="Actions" body={actionsTemplate} style={{ width: '120px', textAlign: 'center' }} />
+                        <Column field="contactNo" header="Contact Number" />
+                        <Column header="Status" body={statusTemplate} />
+                        <Column header="Actions" body={actionsTemplate} style={{ width: '120px', textAlign: 'left' }} />
                     </DataTable>
                 </div>
             )}

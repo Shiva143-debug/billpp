@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode.react';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -8,6 +8,7 @@ import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { InputNumber } from 'primereact/inputnumber';
 import { ProgressSpinner } from 'primereact/progressspinner';
+import { Toast } from 'primereact/toast';
 import { productAPI, checkoutAPI } from '../services/apiService';
 import '../styles/Checkout.css';
 
@@ -22,6 +23,7 @@ const Checkout = () => {
     const { orderDetails } = location.state || {};
     const [showPayButton, setShowPayButton] = useState(true);
     const [TotalAmount, setGrandTotal] = useState(0);
+    const toast = useRef(null);
     const uniqueId = (Math.floor(Math.random() * 9999) + 1).toString().padStart(4, '0');
     const isMobile = useMediaQuery('(max-width:768px)');
     const [inputs, setInputs] = useState([
@@ -79,7 +81,7 @@ const Checkout = () => {
         return <div style={{ textAlign: "center", fontSize: "50px" }}>No order details found</div>;
     }
 
-    const { selectedOption, address, contactNo, grandTotal, items, date } = orderDetails;
+    const { selectedOption, customerName, address, contactNo, grandTotal, items, date } = orderDetails;
 
     const formatDisplayDate = (dateString) => {
         if (!dateString) return '';
@@ -127,13 +129,16 @@ const Checkout = () => {
                 }
             }, 10000);
 
-            const exportData = items.map(item => ({ selectedOption, date, productName: item.product_name, price: item.price, quantity: item.quantity, total_amount: item.total_amount, }));
+            const exportData = items.map(item => ({ customerId: selectedOption, date, productId: item.productId, price: item.price, quantity: item.quantity, totalAmount: item.totalAmount, }));
             const itemsArray = exportData
             const response = await checkoutAPI.exportToSales(itemsArray);
-            console.log(response.data.message);
-
-            await resetDataAndGrandTotal();
-            navigate("/home");
+            console.log(response.message);
+            if (response.success) {
+                await resetDataAndGrandTotal();
+                navigate("/home");
+            } else {
+                console.error('Export to sales failed:', response.message);
+            }
         } catch (error) {
             console.error('Error exporting to sales:', error);
         } finally {
@@ -143,8 +148,12 @@ const Checkout = () => {
 
     const resetDataAndGrandTotal = async () => {
         try {
-            await checkoutAPI.deleteItems(selectedOption);
-            console.log('Items deleted successfully');
+            const response = await checkoutAPI.deleteItems(selectedOption);
+            if (response.success) {
+                console.log('Items deleted successfully:', response.message);
+            } else {
+                console.log('Failed to delete items:', response.message);
+            }
         } catch (error) {
             console.error('Failed to delete items:', error);
         }
@@ -153,7 +162,7 @@ const Checkout = () => {
 
     const onBack = () => {
         orderDetails.items.forEach((item) => {
-            const adddedValues = { productName: item.product_name, quantity: item.quantity };
+            const adddedValues = { productId: item.productId, quantity: item.quantity };
             try {
                 productAPI.addProductQuantity(adddedValues);
                 navigate("/home");
@@ -184,15 +193,22 @@ const Checkout = () => {
         setIsLoading(true);
 
         try {
-            const paymentData = { selectedOption, date, paymentType: "upi_pay", grandTotal };
+            const paymentData = { customerId: selectedOption, date, paymentType: "upi_pay", grandTotal };
             const response = await checkoutAPI.processPayment(paymentData);
-            console.log(response.data.message);
+            if (!response.success) {
+                throw new Error(response.message);
+            }
             setupishow(false);
             setcheckoutshow(true);
             setcashshow(false);
             setShowPayButton(false);
         } catch (error) {
             console.error('Error making payment:', error);
+            toast.current.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: error.message || 'Failed to process payment. Please try again.'
+            });
         } finally {
             setIsLoading(false);
         }
@@ -203,7 +219,7 @@ const Checkout = () => {
 
         try {
             const cashData = {
-                selectedOption, date, grandTotal,
+                customerId: selectedOption, date, grandTotal,
                 denominations: {
                     '2000notes': inputs.find(input => input.denomination === '2000 Notes').value || 0,
                     '500notes': inputs.find(input => input.denomination === '500 Notes').value || 0,
@@ -218,10 +234,16 @@ const Checkout = () => {
                 }
             };
 
-            await checkoutAPI.processCashPayment(cashData);
+            const cashResponse = await checkoutAPI.processCashPayment(cashData);
+            if (!cashResponse.success) {
+                throw new Error(cashResponse.message);
+            }
 
-            const paymentData = { selectedOption, date, paymentType: "cash_pay", grandTotal };
-            await checkoutAPI.processPayment(paymentData);
+            const paymentData = { customerId: selectedOption, date, paymentType: "cash_pay", grandTotal };
+            const paymentResponse = await checkoutAPI.processPayment(paymentData);
+            if (!paymentResponse.success) {
+                throw new Error(paymentResponse.message);
+            }
 
             setupishow(false);
             setcheckoutshow(true);
@@ -229,6 +251,11 @@ const Checkout = () => {
             setShowPayButton(false);
         } catch (error) {
             console.error('Error completing cash payment:', error);
+            toast.current.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: error.message || 'Failed to complete cash payment. Please try again.'
+            });
         } finally {
             setIsLoading(false);
         }
@@ -243,15 +270,15 @@ const Checkout = () => {
 
     return (
         <div className="checkout-container">
-
+            <Toast ref={toast} />
             {isLoading && (
                 <div className="spinner-container">
                     <ProgressSpinner style={{ width: '50px', height: '50px' }} strokeWidth="4" />
                 </div>
             )}
             {checkshow && (
-                <Card className="checkout-card">
-                    <div className="invoice-header">
+                <div className="checkout-sheet">
+                    <div className="sheet-header">
                         <div className="invoice-brand">
                             <div className="brand-badge">BP</div>
                             <div className="brand-meta">
@@ -260,39 +287,56 @@ const Checkout = () => {
                                 <p className="brand-tagline">Official Sales Receipt</p>
                             </div>
                         </div>
-                        <div className="d-flex flex-column ">
+                        <div className="sheet-meta">
                             <span className="meta-label">Invoice No: {uniqueId}</span>
-                            <span className="meta-label">Date :{formatDisplayDate(date)}</span>
+                            <span className="meta-label">Date: {formatDisplayDate(date)}</span>
                         </div>
-
                         {!showPayButton && (
                             <Button label="Export / Print" icon="pi pi-print" className="export-btn no-print" onClick={handlePrint} />
                         )}
                     </div>
 
-               
+                    <div className="checkout-body">
+                        <div className="checkout-left">
 
-                    <div className="customer-panel">
-                        <span className="panel-label">Customer Details</span>
-                        <span className="customer-name">{selectedOption} {address}</span>
-                        <span className="customer-line">{contactNo}</span>
-                    </div>
-
-                    <DataTable value={items} className="reports-table" responsiveLayout="scroll" stripedRows>
-                        <Column field="product_name" header="Product Name" />
-                        <Column field="price" header="Price" />
-                        <Column field="quantity" header="Qty" />
-                        <Column field="total_amount" header="Total" />
-                    </DataTable>
-
-                    <div className="total-box">
-                        <div className="total-line">
-                            <span className="total-label">Number of Items: {items.length}</span>
-                            {/* <span className="total-value">{items.length}</span> */}
+                            <div className="section-card">
+                                <h3 className="section-title">Customer Details</h3>
+                                <div className="detail-row">
+                                    <span className="detail-label">Name</span>
+                                    <span className="detail-value">{customerName || selectedOption}</span>
+                                </div>
+                                <div className="detail-row">
+                                    <span className="detail-label">Address</span>
+                                    <span className="detail-value">{address}</span>
+                                </div>
+                                <div className="detail-row">
+                                    <span className="detail-label">Contact</span>
+                                    <span className="detail-value">{contactNo}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div className="total-line total-main">
-                            <span className="total-label">Grand Total</span>
-                            <span className="total-value">{formatCurrency(grandTotal)}</span>
+
+                        <div className="checkout-divider" />
+
+                        <div className="checkout-right">
+                            <h3 className="section-title">Purchased Products</h3>
+                            <DataTable value={items} className="invoice-table" responsiveLayout="scroll" stripedRows scrollable scrollHeight="320px">
+                                <Column field="productName" header="Product" />
+                                <Column field="price" header="Price" />
+                                <Column field="quantity" header="Qty" />
+                                <Column field="totalAmount" header="Total" />
+                            </DataTable>
+
+                            <div className="total-box">
+                                <div className="total-line">
+                                    <span className="total-label">Number of Items:{items.length}</span>
+                                    {/* <span className="total-value">{items.length}</span> */}
+                                </div>
+                                <div className="total-line total-main">
+                                    <span className="total-label">Grand Total</span>
+                                    <span className="total-value">{formatCurrency(grandTotal)}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -310,7 +354,7 @@ const Checkout = () => {
                             )}
                         </div>
                     )}
-                </Card>
+                </div>
             )}
 
             {upishow && (
@@ -330,25 +374,40 @@ const Checkout = () => {
             )}
 
             {cashshow && (
-                <Card className="checkout-card">
-                    <div className="screen-header">
-                        <h2 className="screen-title">Cash Payment</h2>
+                <Card className="checkout-card cash-card">
+                    <div className="cash-header">
+                        <div className="cash-header-left">
+                            <Button label="" icon="pi pi-arrow-left" className="cash-back-btn no-print" onClick={onBack} disabled={isLoading} />
+                            <h2 className="screen-title">Cash Payment</h2>
+                        </div>
                         <div className="amount-due">{formatCurrency(parseInt(grandTotal))}</div>
                     </div>
 
-                    <DataTable value={inputs} className="denomination-table" responsiveLayout="scroll" stripedRows>
-                        <Column field="denomination" header="Denomination" />
-                        <Column header="Count" body={(rowData, rowIndex) => (
-                            <InputNumber value={rowData.value} onValueChange={(e) => handleInputChange(rowIndex.rowIndex, e.value)} className="denomination-input" />
-                        )} />
-                        <Column header="Amount" body={(rowData) => formatCurrency(calculateAmount(rowData.denomination, rowData.value))} />
-                    </DataTable>
+                    <div className="denomination-grid">
+                        {inputs.map((input, index) => (
+                            <div className="denomination-item" key={input.denomination}>
+                                <span className="denomination-name">{input.denomination}</span>
+                                <div className="denomination-input-wrap">
+                                    <InputNumber
+                                        value={input.value}
+                                        onValueChange={(e) => handleInputChange(index, e.value)}
+                                        className="denomination-input"
+                                        min={0}
+                                    />
+                                </div>
+                                <span className="denomination-amount">
+                                    {formatCurrency(calculateAmount(input.denomination, input.value))}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
 
                     <div className="cash-summary">
                         <div className="total-line">
                             <span className="total-label">Cash Received</span>
                             <span className="total-value">{formatCurrency(TotalAmount)}</span>
                         </div>
+                        <hr className="cash-summary-divider" />
                         <div className="total-line">
                             <span className="total-label">Remaining Balance</span>
                             <span className="total-value">{formatCurrency(remainingBalance >= 0 ? remainingBalance : 0)}</span>
@@ -359,8 +418,6 @@ const Checkout = () => {
                     </div>
 
                     <div className="action-buttons no-print">
-                        <Button label="Back" icon="pi pi-arrow-left" className="back-btn" onClick={onBack} disabled={isLoading} />
-
                         {remainingBalance === 0 && (
                             <Button label="Complete Cash Payment" icon="pi pi-check" className="pay-btn" onClick={cashpaymentCompleted} disabled={isLoading} />
                         )}
