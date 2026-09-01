@@ -32,7 +32,7 @@ function AppRoutes() {
    const {login} = useAuth();
 
   useEffect(() => {
-    document.title = "BillPP - Invoice Management";
+    document.title = "BillAPP - Invoice Management";
   }, []);
 
   if (isAppLoading) {

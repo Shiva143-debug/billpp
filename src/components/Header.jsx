@@ -2,7 +2,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useRef, useState } from 'react';
 import { Toast } from 'primereact/toast';
 import { ConfirmPopup, confirmPopup } from 'primereact/confirmpopup';
-import { TbHome, TbReportSearch } from "react-icons/tb";
+import { TbHome, TbReportSearch, TbLogout } from "react-icons/tb";
 import { FaFileInvoice } from "react-icons/fa";
 import { BiSolidDetail } from "react-icons/bi";
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -14,8 +14,11 @@ const Header = () => {
     const [activeButton, setActiveButton] = useState(getActiveButton(location.pathname));
     const navigate = useNavigate();
     const toast = useRef(null);
-    const { logout } = useAuth();
+    const { logout, user } = useAuth();
     const isMobile = useMediaQuery('(max-width:768px)');
+
+    const displayName = user?.FullName || user?.fullName || user?.name || user?.username || user?.email || "User";
+    const initials = displayName.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
 
     const accept = () => {
         toast.current.show({ severity: 'success', summary: 'Confirmed', detail: 'You have logged out successfully', life: 3000 });
@@ -63,7 +66,9 @@ const Header = () => {
                 <Link to="/home" className="logo-link">
                     <div className="logo-container">
                         <div className="logo-badge">
+                            <span className="logo-badge-ring"></span>
                             <FaFileInvoice className="logo-icon" />
+                            <span className="logo-spark"></span>
                         </div>
                         <div className="logo-text">
                             <span className="logo-brand">Bill</span>
@@ -79,8 +84,17 @@ const Header = () => {
                     </ul>
                 )}
 
-                {!isMobile && <button type="button" className="logout-desktop-btn" onClick={onClickLogout}> Logout </button>}
-                {isMobile && <img src="https://assets.ccbp.in/frontend/react-js/nxt-trendz-log-out-img.png" alt="nav logout" className="nav-bar-img" onClick={onClickLogout} />}
+                {!isMobile && user && (
+                    <div className="user-profile" onClick={onClickLogout} title="Logout">
+                        <div className="user-avatar">{initials}</div>
+                        <div className="user-info">
+                            <span className="user-name">{displayName}</span>
+                            <span className="user-role">Logout <TbLogout /></span>
+                        </div>
+                    </div>
+                )}
+                {!isMobile && !user && <button type="button" className="logout-desktop-btn" onClick={onClickLogout}> Logout </button>}
+                {isMobile && <div className="user-avatar" onClick={onClickLogout}>{initials}</div>}
             </div>
 
             {/* Mobile Bottom Navigation */}

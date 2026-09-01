@@ -133,7 +133,7 @@ function Login({ onLogin }) {
             return;
         }
 
-        const userData = { email, updatedpassword: updatedPassword, updatedConfirmpassword: updatedConfirmPassword };
+        const userData = { email, updatedpassword: updatedPassword };
 
         try {
             setIsLoading(true);
